@@ -54,6 +54,28 @@ const PROVIDERS = {
   custom: { name: "第三方 API", desc: "本地或第三方 OpenAI 兼容接口", type: "openai" }
 };
 
+const PROVIDER_ICONS = {
+  volcano: "🌋",
+  google: "G",
+  deepseek: "DS",
+  deepl: "D",
+  openai: "AI",
+  doubao: "豆",
+  gemini: "✦",
+  custom: "API"
+};
+
+const PROVIDER_LOGOS = {
+  volcano: "assets/logos/volcano.svg",
+  google: "assets/logos/google.svg",
+  deepseek: "assets/logos/deepseek.svg",
+  deepl: "assets/logos/deepl.svg",
+  openai: "assets/logos/openai.svg",
+  doubao: "assets/logos/doubao.svg",
+  gemini: "assets/logos/gemini.svg",
+  custom: "assets/logos/custom.svg"
+};
+
 const LANGUAGES = [
   ["zh-CN", "中文(简体)"],
   ["zh-TW", "中文(繁体)"],
@@ -176,6 +198,7 @@ function renderProviderSelect() {
     option.textContent = "没有可用引擎";
     select.appendChild(option);
     select.disabled = true;
+    renderMainProviderPicker();
     return;
   }
 
@@ -187,6 +210,30 @@ function renderProviderSelect() {
     select.appendChild(option);
   }
   select.value = state.settings.provider;
+  renderMainProviderPicker();
+}
+
+function renderMainProviderPicker() {
+  const provider = state.settings.provider;
+  const meta = PROVIDERS[provider];
+  const logoWrap = document.getElementById("providerLogoMain");
+  const name = document.getElementById("providerNameMain");
+  const badge = document.getElementById("providerBadgeMain");
+  if (!logoWrap || !name || !badge) return;
+
+  logoWrap.className = `provider-picker-logo provider-logo-${provider || "custom"}`;
+  logoWrap.textContent = "";
+  const logo = PROVIDER_LOGOS[provider];
+  if (logo) {
+    const img = document.createElement("img");
+    img.src = logo;
+    img.alt = "";
+    logoWrap.appendChild(img);
+  } else {
+    logoWrap.textContent = PROVIDER_ICONS[provider] || "●";
+  }
+  name.textContent = meta?.name || "没有可用引擎";
+  badge.textContent = provider === "google" ? "（推荐）" : "";
 }
 
 function renderProviders() {
@@ -200,10 +247,32 @@ function renderProviders() {
 
     const card = template.content.firstElementChild.cloneNode(true);
     card.dataset.provider = provider;
-    card.draggable = true;
+    card.draggable = false;
     card.classList.toggle("is-open", state.expandedProvider === provider);
+    const icon = card.querySelector(".provider-icon");
+    if (icon) {
+      icon.className = `provider-icon provider-logo-${provider}`;
+      const logo = PROVIDER_LOGOS[provider];
+      icon.textContent = "";
+      if (logo) {
+        const img = document.createElement("img");
+        img.src = logo;
+        img.alt = "";
+        icon.appendChild(img);
+      } else {
+        icon.textContent = PROVIDER_ICONS[provider] || "●";
+      }
+    }
+    const dragHandle = card.querySelector(".drag-handle");
+    if (dragHandle) {
+      dragHandle.draggable = true;
+    }
     card.querySelector(".provider-title strong").textContent = meta.name;
-    card.querySelector(".provider-title span").textContent = meta.desc;
+    card.querySelector(".provider-title .provider-tag").textContent = meta.desc;
+    const preferred = card.querySelector(".provider-preferred");
+    if (preferred) {
+      preferred.checked = state.settings.provider === provider;
+    }
     card.querySelector(".provider-enabled").checked = Boolean(state.settings.providerEnabled[provider]);
 
     const settingsButton = card.querySelector(".settings-provider");

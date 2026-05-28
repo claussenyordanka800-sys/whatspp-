@@ -1,0 +1,5 @@
+<svg role="img" viewBox="0 0 64 64" xmlns="http://www.w3.org/2000/svg">
+  <title>Custom API</title>
+  <rect x="8" y="8" width="48" height="48" rx="13" fill="#eef2ff"/>
+  <path d="M20 35l-6-6 6-6M44 23l6 6-6 6M28 42l8-26" fill="none" stroke="#3730a3" stroke-width="5" stroke-linecap="round" stroke-linejoin="round"/>
+</svg>

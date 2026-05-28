@@ -1,0 +1,11 @@
+<svg role="img" viewBox="0 0 64 64" xmlns="http://www.w3.org/2000/svg">
+  <title>Volcengine Translate</title>
+  <defs>
+    <linearGradient id="volcano-a" x1="11" y1="58" x2="48" y2="8" gradientUnits="userSpaceOnUse">
+      <stop stop-color="#ff3d2e"/>
+      <stop offset="1" stop-color="#ff8a00"/>
+    </linearGradient>
+  </defs>
+  <path d="M16 56h32c4.7 0 7.8-5 5.6-9.2L39.2 18.4c-3.1-6.1-11.3-6.1-14.4 0L10.4 46.8C8.2 51 11.3 56 16 56z" fill="url(#volcano-a)"/>
+  <path d="M28.8 18.6c2 4.3-.4 8-3.3 11.5-3.8 4.5-3.2 9.7 1.1 13.5-1.1-5.3 5.1-8.1 5.1-13.8 2.8 3.1 3.8 5.8 2.7 9.7 4.6-2.5 7-9.5 3.1-15.5-1.1 3.4-3.4 4.9-6 4.7 1.9-4.7 1.4-8-2.7-10.1z" fill="#fff"/>
+</svg>

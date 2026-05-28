@@ -7,96 +7,129 @@
     <link rel="stylesheet" href="popup.css">
   </head>
   <body>
-    <header>
-      <h1>WhatsApp翻译无忧</h1>
-      <span id="saveStatus"></span>
-    </header>
-
-    <main>
-      <label class="switch-row">
-        <input id="enabled" type="checkbox">
-        <span>翻译开关</span>
-      </label>
-
-      <section class="engine-section">
-        <div class="section-head">
-          <h2>翻译引擎</h2>
-          <button id="openEngineSettings" class="link-button" type="button">设置</button>
+    <main class="app-shell">
+      <header class="app-header">
+        <div class="app-brand">
+          <span class="brand-logo" aria-hidden="true"><img src="assets/logos/whatsapp.svg" alt=""></span>
+          <h1>WhatsApp翻译无忧</h1>
         </div>
-        <select id="provider"></select>
-      </section>
+        <span id="saveStatus"></span>
+        <div class="header-actions">
+          <button class="icon-btn ghost" type="button" title="设置">⚙</button>
+          <button class="icon-btn ghost" type="button" title="更多">⋮</button>
+        </div>
+      </header>
 
-      <div class="grid">
-        <label>
-          收到消息翻译成
-          <select id="receiveLanguage"></select>
-        </label>
-        <label>
-          发消息翻译成
-          <select id="sendLanguage"></select>
-        </label>
-      </div>
-
-      <label class="switch-row">
-        <input id="autoDetectLanguage" type="checkbox">
-        <span>智能识别联系人语言</span>
-      </label>
-      <label class="switch-row">
-        <input id="autoReceive" type="checkbox">
-        <span>自动翻译双方消息</span>
-      </label>
-
-      <fieldset>
-        <legend>发送翻译方式</legend>
-        <label class="radio-row">
-          <input name="sendTrigger" type="radio" value="enter">
-          <span>回车翻译</span>
-        </label>
-        <label class="radio-row">
-          <input name="sendTrigger" type="radio" value="typing">
-          <span>输入时翻译</span>
-        </label>
-      </fieldset>
-
-      <label class="switch-row">
-        <input id="forbidChinese" type="checkbox">
-        <span>禁止中文直接发送</span>
-      </label>
-
-      <section>
-        <h2>译文样式</h2>
-        <div class="style-row">
-          <label>
-            译文颜色
-            <input id="translationColor" type="color">
-          </label>
-          <label>
-            字体大小
-            <select id="translationSize">
-              <option value="small">小</option>
-              <option value="default">默认</option>
-              <option value="large">大</option>
-              <option value="xlarge">特大</option>
-            </select>
+      <section class="panel-card panel-main">
+        <div class="section-block switch-block">
+          <label class="switch-row switch-lg">
+            <input id="enabled" type="checkbox">
+            <span class="switch-text">
+              <strong>翻译开关</strong>
+              <small>开启后自动翻译消息内容</small>
+            </span>
           </label>
         </div>
-      </section>
 
-      <button id="save" type="button">保存设置</button>
-      <p id="status" role="status"></p>
+        <div class="section-block section-divider">
+          <div class="section-head">
+            <h2>翻译引擎</h2>
+            <button id="openEngineSettings" class="link-button" type="button">引擎设置</button>
+          </div>
+          <div class="provider-picker">
+            <span id="providerLogoMain" class="provider-picker-logo" aria-hidden="true"></span>
+            <span id="providerNameMain" class="provider-picker-name">谷歌翻译</span>
+            <span id="providerBadgeMain" class="provider-picker-badge">（推荐）</span>
+            <span class="provider-picker-arrow" aria-hidden="true">⌄</span>
+            <select id="provider" aria-label="翻译引擎"></select>
+          </div>
+        </div>
+
+        <div class="section-block dual-grid section-divider">
+          <label>
+            收到消息翻译成
+            <select id="receiveLanguage"></select>
+          </label>
+          <label>
+            发送消息翻译成
+            <select id="sendLanguage"></select>
+          </label>
+        </div>
+
+        <div class="section-block check-list section-divider">
+          <label class="switch-row">
+            <input id="autoDetectLanguage" type="checkbox">
+            <span>智能识别联系人语言</span>
+            <span class="info-dot" title="自动检测对方语言，优化发送翻译">i</span>
+          </label>
+          <label class="switch-row">
+            <input id="autoReceive" type="checkbox">
+            <span>自动翻译双方消息</span>
+            <span class="info-dot" title="收到和发送消息都自动显示译文">i</span>
+          </label>
+        </div>
+
+        <fieldset class="section-block section-divider">
+          <legend>发送翻译方式</legend>
+          <label class="radio-row">
+            <input name="sendTrigger" type="radio" value="enter">
+            <span>
+              回车翻译
+              <small>按 Enter 发送翻译</small>
+            </span>
+          </label>
+          <label class="radio-row">
+            <input name="sendTrigger" type="radio" value="typing">
+            <span>
+              输入时翻译
+              <small>输入内容实时翻译</small>
+            </span>
+          </label>
+        </fieldset>
+
+        <label class="switch-row section-block section-divider">
+          <input id="forbidChinese" type="checkbox">
+          <span>禁止中文直接发送</span>
+          <span class="info-dot" title="发送前必须先翻译">i</span>
+        </label>
+
+        <section class="section-block section-divider">
+          <h2>译文样式</h2>
+          <div class="style-grid">
+            <label>
+              译文颜色
+              <div class="color-select-wrap">
+                <input id="translationColor" type="color" value="#8e24aa">
+              </div>
+            </label>
+            <label>
+              字体大小
+              <select id="translationSize">
+                <option value="small">小</option>
+                <option value="default">默认</option>
+                <option value="large">大</option>
+                <option value="xlarge">特大</option>
+              </select>
+            </label>
+          </div>
+        </section>
+
+        <button id="save" type="button" class="save-main-btn">💾 保存设置</button>
+        <p id="status" role="status"></p>
+      </section>
     </main>
 
     <div id="engineModal" class="modal" hidden>
       <div class="modal-panel" role="dialog" aria-modal="true" aria-labelledby="engineTitle">
         <div class="modal-head">
           <h2 id="engineTitle">引擎设置</h2>
-          <button id="closeEngineSettings" class="icon-btn" type="button" title="关闭">x</button>
+          <button id="closeEngineSettings" class="icon-btn ghost" type="button" title="关闭">✕</button>
         </div>
         <p class="hint">支持拖拽排序。排序越靠前，优先级越高；失败后会按顺序自动切换备用引擎。</p>
         <div id="providerList" class="provider-list"></div>
         <div class="modal-actions">
           <button id="cancelEngineSettings" class="plain-button" type="button">取消</button>
-          <button id="saveEngineSettings" class="plain-button save-text" type="button">保存</button>
+          <button id="saveEngineSettings" class="save-button" type="button">保存</button>
         </div>
       </div>
     </div>
@@ -104,16 +137,19 @@
     <template id="providerTemplate">
       <article class="provider-card">
         <div class="provider-head">
-          <div class="sort-actions">
-            <button class="icon-btn drag-handle" type="button" title="拖拽排序">↕</button>
-          </div>
+          <button class="drag-handle" type="button" title="拖拽排序">⋮⋮</button>
           <div class="provider-title">
+            <span class="provider-icon" aria-hidden="true">●</span>
             <strong></strong>
-            <span></span>
+            <span class="provider-tag"></span>
           </div>
           <div class="provider-actions">
             <button class="icon-btn settings-provider" type="button" title="设置">⚙</button>
             <button class="icon-btn test-provider" type="button" title="测试接口">✓</button>
+            <label class="prefer-switch" title="首选">
+              <input class="provider-preferred" type="checkbox" disabled>
+              <span>首选</span>
+            </label>
             <label class="mini-switch" title="启用">
               <input class="provider-enabled" type="checkbox">
               <span></span>
