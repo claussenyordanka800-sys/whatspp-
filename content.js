@@ -66,10 +66,12 @@ const state = {
   observer: null,
   scanTimer: null,
   draftTimer: null,
+  detectTimer: null,
   detectedLanguage: "",
   manualLanguage: "",
   lastDraftSource: "",
   isReplacingDraft: false,
+  isDetectingLanguage: false,
   translatingMessages: new WeakSet()
 };
 
@@ -126,11 +128,16 @@ function scanPage() {
   if (!state.settings.enabled) {
     return;
   }
-  updateDetectedLanguage();
+  scheduleLanguageDetection();
   applyTranslationStyle();
   document.querySelectorAll(MESSAGE_SELECTOR).forEach(enhanceMessage);
   enhanceComposer();
   updateLanguagePrompt();
+}
+
+function scheduleLanguageDetection() {
+  clearTimeout(state.detectTimer);
+  state.detectTimer = setTimeout(updateDetectedLanguage, 350);
 }
 
 function applyTranslationStyle() {
@@ -298,7 +305,13 @@ function installLanguagePrompt(footer) {
     updateLanguagePrompt();
   });
 
-  prompt.append(label, select);
+  const button = document.createElement("button");
+  button.className = "wa-manual-translate";
+  button.type = "button";
+  button.textContent = "翻译";
+  button.addEventListener("click", () => translateComposer(true));
+
+  prompt.append(label, select, button);
   footer.insertBefore(prompt, footer.firstChild);
 }
 
@@ -311,10 +324,14 @@ function updateLanguagePrompt() {
   const language = getActiveSendLanguage();
   const label = prompt.querySelector(".wa-language-prompt-label");
   const select = prompt.querySelector(".wa-language-select");
+  const button = prompt.querySelector(".wa-manual-translate");
   const languageText = LANGUAGE_LABELS[language] || language;
 
   label.innerHTML = `\u5f53\u524d\u573a\u666f\u8bed\u8a00\u4e3a<span>${escapeHtml(languageText)}</span>\uff0c\u5207\u6362\u8bed\u8a00`;
   select.value = language;
+  if (button) {
+    button.hidden = state.settings.sendTrigger !== "manual";
+  }
 }
 
 function installDraftWatcher(input) {
@@ -444,7 +461,7 @@ async function replaceComposerText(input, text) {
 }
 
 async function updateDetectedLanguage() {
-  if (!state.settings.autoDetectLanguage || state.manualLanguage) {
+  if (!state.settings.autoDetectLanguage || state.manualLanguage || state.isDetectingLanguage) {
     return;
   }
 
@@ -461,6 +478,7 @@ async function updateDetectedLanguage() {
     return;
   }
 
+  state.isDetectingLanguage = true;
   try {
     const result = await chrome.i18n.detectLanguage(incomingText.slice(0, 1000));
     const first = result?.languages?.[0];
@@ -472,6 +490,8 @@ async function updateDetectedLanguage() {
     }
   } catch (error) {
     console.warn("[WhatsApp Translator] language detection failed", error);
+  } finally {
+    state.isDetectingLanguage = false;
   }
 }
 
