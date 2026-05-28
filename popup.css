@@ -197,15 +197,20 @@ input[type="color"] {
 .provider-card {
   border: 1px solid #dce1e7;
   border-radius: 4px;
+  cursor: grab;
   margin: 5px 0;
   padding: 7px 8px;
+}
+
+.provider-card.is-dragging {
+  opacity: 0.65;
 }
 
 .provider-head {
   align-items: center;
   display: grid;
   gap: 8px;
-  grid-template-columns: 48px minmax(0, 1fr) auto;
+  grid-template-columns: 30px minmax(0, 1fr) auto;
   min-height: 34px;
 }
 

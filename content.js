@@ -325,7 +325,7 @@ function updateLanguagePrompt() {
   const select = prompt.querySelector(".wa-language-select");
   const languageText = LANGUAGE_LABELS[language] || language;
 
-  label.innerHTML = `\u5f53\u524d\u573a\u666f\u8bed\u8a00\u4e3a<span>${escapeHtml(languageText)}</span>\uff0c\u5207\u6362\u8bed\u8a00`;
+  label.innerHTML = `\u53d1\u9001\u6d88\u606f\u5c06\u7ffb\u8bd1\u4e3a<span>${escapeHtml(languageText)}</span>\uff0c\u5207\u6362\u8bed\u8a00`;
   select.value = language;
 }
 

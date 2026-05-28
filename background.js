@@ -1,15 +1,15 @@
-const DEFAULT_PROVIDER_ORDER = ["volcano", "google", "deepseek", "deepl", "openai", "doubao", "gemini", "custom"];
+﻿const DEFAULT_PROVIDER_ORDER = ["google", "volcano", "deepseek", "deepl", "openai", "doubao", "gemini", "custom"];
 const LEGACY_PROVIDER_ORDER = ["volcano", "deepl", "openai", "deepseek", "doubao", "gemini", "custom", "google"];
 const DEEPSEEK_FALLBACK_MODELS = [
-  { id: "deepseek-chat", name: "deepseek-chat（通用对话）" },
-  { id: "deepseek-reasoner", name: "deepseek-reasoner（推理）" },
+  { id: "deepseek-chat", name: "deepseek-chat (general)" },
+  { id: "deepseek-reasoner", name: "deepseek-reasoner (reasoning)" },
   { id: "deepseek-v4-flash", name: "deepseek-v4-flash" },
   { id: "deepseek-v4-pro", name: "deepseek-v4-pro" }
 ];
 
 const DEFAULT_SETTINGS = {
   enabled: true,
-  provider: "volcano",
+  provider: "google",
   providerOrder: DEFAULT_PROVIDER_ORDER,
   providerEnabled: {
     volcano: true,
@@ -44,7 +44,7 @@ const DEFAULT_SETTINGS = {
 
 const PROVIDER_NAMES = {
   volcano: "火山翻译",
-  google: "Google 翻译",
+  google: "谷歌翻译",
   deepseek: "DeepSeek",
   deepl: "DeepL",
   openai: "OpenAI",
@@ -111,7 +111,7 @@ async function translateMessage(payload) {
   const direction = payload?.direction || "receive";
 
   if (!text) {
-    throw new Error("没有可翻译的文本");
+    throw new Error("娌℃湁鍙炕璇戠殑鏂囨湰");
   }
 
   const settings = await getSettings();
@@ -137,7 +137,7 @@ async function translateMessage(payload) {
       });
       const clean = normalizeTranslation(translated);
       if (!clean) {
-        throw new Error("翻译结果为空");
+        throw new Error("缈昏瘧缁撴灉涓虹┖");
       }
       await chrome.storage.local.set({ [cacheKey]: clean });
       trimCacheSoon();
@@ -147,7 +147,7 @@ async function translateMessage(payload) {
     }
   }
 
-  throw new Error(lastError || "翻译失败");
+  throw new Error(lastError || "缈昏瘧澶辫触");
 }
 
 async function testProvider(provider, config, targetLanguage = "zh-CN") {
@@ -176,12 +176,12 @@ async function listModels(provider, config) {
   if (provider === "gemini") {
     const apiKey = cleanConfig.apiKey?.trim();
     if (!apiKey) {
-      throw new Error("Gemini 缺少 API Key");
+      throw new Error("Gemini 缂哄皯 API Key");
     }
     const baseUrl = cleanConfig.baseUrl || DEFAULT_SETTINGS.providers.gemini.baseUrl;
     const response = await fetch(`${baseUrl.replace(/\/+$/, "")}/models?key=${encodeURIComponent(apiKey)}`);
     if (!response.ok) {
-      throw await buildHttpError("读取 Gemini 模型失败", response);
+      throw await buildHttpError("璇诲彇 Gemini 妯″瀷澶辫触", response);
     }
     const data = await response.json();
     const models = (data.models || [])
@@ -197,13 +197,13 @@ async function listModels(provider, config) {
   if (isOpenAICompatibleProvider(provider)) {
     const baseUrl = cleanConfig.baseUrl?.trim();
     if (!baseUrl) {
-      throw new Error("缺少接口地址");
+      throw new Error("缂哄皯鎺ュ彛鍦板潃");
     }
     const response = await fetch(`${baseUrl.replace(/\/+$/, "")}/models`, {
       headers: buildAuthHeaders(provider, cleanConfig)
     });
     if (!response.ok) {
-      throw await buildHttpError("读取模型失败", response, provider);
+      throw await buildHttpError("璇诲彇妯″瀷澶辫触", response, provider);
     }
     const data = await response.json();
     const models = (data.data || data.models || [])
@@ -278,7 +278,7 @@ async function translateByProvider(provider, options) {
   if (isOpenAICompatibleProvider(provider)) {
     return translateWithOpenAICompatible({ ...options, provider, config });
   }
-  throw new Error("未知翻译引擎");
+  throw new Error("鏈煡缈昏瘧寮曟搸");
 }
 
 function normalizeProviderConfig(provider, config) {
@@ -295,7 +295,7 @@ async function translateWithGoogle(text, targetLanguage) {
   });
   const response = await fetch(`https://translate.googleapis.com/translate_a/single?${params.toString()}`);
   if (!response.ok) {
-    throw await buildHttpError("Google 翻译失败", response);
+    throw await buildHttpError("Google 缈昏瘧澶辫触", response);
   }
   const data = await response.json();
   return Array.isArray(data?.[0]) ? data[0].map((part) => part?.[0] || "").join("") : "";
@@ -311,7 +311,7 @@ async function translateWithVolcanoFree(text, targetLanguage, config) {
     })
   });
   if (!response.ok) {
-    throw await buildHttpError("火山翻译失败", response);
+    throw await buildHttpError("鐏北缈昏瘧澶辫触", response);
   }
   const data = await response.json();
   return data.translation || data.data?.translation || data.text || "";
@@ -320,7 +320,7 @@ async function translateWithVolcanoFree(text, targetLanguage, config) {
 async function translateWithDeepL(text, targetLanguage, config) {
   const apiKey = config.apiKey?.trim();
   if (!apiKey) {
-    throw new Error("DeepL 缺少 API Key");
+    throw new Error("DeepL 缂哄皯 API Key");
   }
   const baseUrl = (config.baseUrl || (apiKey.endsWith(":fx") ? "https://api-free.deepl.com/v2" : "https://api.deepl.com/v2")).replace(/\/+$/, "");
   const response = await fetch(`${baseUrl}/translate`, {
@@ -335,7 +335,7 @@ async function translateWithDeepL(text, targetLanguage, config) {
     }).toString()
   });
   if (!response.ok) {
-    throw await buildHttpError("DeepL 翻译失败", response);
+    throw await buildHttpError("DeepL 缈昏瘧澶辫触", response);
   }
   const data = await response.json();
   return data.translations?.[0]?.text || "";
@@ -345,10 +345,10 @@ async function translateWithGemini(options, config) {
   const apiKey = config.apiKey?.trim();
   const model = config.model?.trim();
   if (!apiKey) {
-    throw new Error("Gemini 缺少 API Key");
+    throw new Error("Gemini 缂哄皯 API Key");
   }
   if (!model) {
-    throw new Error("Gemini 缺少模型");
+    throw new Error("Gemini 缂哄皯妯″瀷");
   }
   const baseUrl = (config.baseUrl || DEFAULT_SETTINGS.providers.gemini.baseUrl).replace(/\/+$/, "");
   const modelPath = model.startsWith("models/") ? model : `models/${model}`;
@@ -366,7 +366,7 @@ async function translateWithGemini(options, config) {
     })
   });
   if (!response.ok) {
-    throw await buildHttpError("Gemini 请求失败", response);
+    throw await buildHttpError("Gemini 璇锋眰澶辫触", response);
   }
   const data = await response.json();
   return data.candidates?.[0]?.content?.parts?.map((part) => part.text || "").join("") || "";
@@ -379,10 +379,10 @@ async function translateWithOpenAICompatible(options) {
   const providerName = PROVIDER_NAMES[options.provider] || options.provider;
 
   if (!baseUrl) {
-    throw new Error(`${providerName} 缺少接口地址`);
+    throw new Error(`${providerName} 缂哄皯鎺ュ彛鍦板潃`);
   }
   if (!model) {
-    throw new Error(`${providerName} 缺少模型`);
+    throw new Error(`${providerName} 缂哄皯妯″瀷`);
   }
 
   const response = await fetch(toChatCompletionsUrl(baseUrl, options.provider), {
@@ -408,7 +408,7 @@ async function translateWithOpenAICompatible(options) {
   });
   if (!response.ok) {
     const detail = await safeReadText(response);
-    throw buildHttpErrorFromDetail(`${providerName} 请求失败`, response.status, detail, options.provider);
+    throw buildHttpErrorFromDetail(`${providerName} 璇锋眰澶辫触`, response.status, detail, options.provider);
   }
   const data = await response.json();
   return data.choices?.[0]?.message?.content || "";
@@ -483,7 +483,7 @@ function normalizeDeepSeekBaseUrl(baseUrl) {
 async function listDeepSeekModels(config) {
   const apiKey = config.apiKey?.trim();
   if (!apiKey) {
-    throw new Error("DeepSeek 缺少 API Key");
+    throw new Error("DeepSeek 缂哄皯 API Key");
   }
   const baseUrl = normalizeDeepSeekBaseUrl(config.baseUrl);
   const response = await fetch(`${baseUrl}/models`, {
@@ -494,7 +494,7 @@ async function listDeepSeekModels(config) {
     if ([404, 405].includes(response.status)) {
       return { ok: true, models: DEEPSEEK_FALLBACK_MODELS, fallback: true };
     }
-    throw buildHttpErrorFromDetail("读取 DeepSeek 模型失败", response.status, detail, "deepseek");
+    throw buildHttpErrorFromDetail("璇诲彇 DeepSeek 妯″瀷澶辫触", response.status, detail, "deepseek");
   }
   const data = await response.json();
   const models = (data.data || data.models || [])
@@ -524,7 +524,7 @@ function normalizeText(text) {
 
 function normalizeTranslation(text) {
   return normalizeText(text)
-    .replace(/^["'“”‘’]+|["'“”‘’]+$/g, "")
+    .replace(/^["']+|["']+$/g, "")
     .trim();
 }
 
@@ -571,21 +571,22 @@ async function buildHttpError(prefix, response, provider) {
 
 function buildHttpErrorFromDetail(prefix, status, detail, provider) {
   const hintMap = {
-    400: "请求参数错误，请检查模型名和接口地址",
-    401: "认证失败，请检查 API Key 是否正确、是否已复制完整",
-    403: "无权限访问，请检查账号权限、余额或模型权限",
+    400: "璇锋眰鍙傛暟閿欒锛岃妫€鏌ユā鍨嬪悕鍜屾帴鍙ｅ湴鍧€",
+    401: "璁よ瘉澶辫触锛岃妫€鏌?API Key 鏄惁姝ｇ‘銆佹槸鍚﹀凡澶嶅埗瀹屾暣",
+    403: "鏃犳潈闄愯闂紝璇锋鏌ヨ处鍙锋潈闄愩€佷綑棰濇垨妯″瀷鏉冮檺",
     404: provider === "deepseek"
-      ? "地址或模型不存在，DeepSeek 推荐 Base URL: https://api.deepseek.com"
-      : "地址或模型不存在，请检查 Base URL 和模型名",
+      ? "鍦板潃鎴栨ā鍨嬩笉瀛樺湪锛孌eepSeek 鎺ㄨ崘 Base URL: https://api.deepseek.com"
+      : "鍦板潃鎴栨ā鍨嬩笉瀛樺湪锛岃妫€鏌?Base URL 鍜屾ā鍨嬪悕",
     429: "请求过快或额度不足，请稍后重试或检查余额",
     500: "服务端异常，请稍后重试",
-    502: "服务网关异常，请稍后重试",
-    503: "服务暂不可用，请稍后重试"
+    502: "鏈嶅姟缃戝叧寮傚父锛岃绋嶅悗閲嶈瘯",
+    503: "鏈嶅姟鏆備笉鍙敤锛岃绋嶅悗閲嶈瘯"
   };
-  const hint = hintMap[status] || "请求失败";
-  return new Error(`${prefix}: HTTP ${status}，${hint}${detail ? `。返回：${detail}` : ""}`);
+  const hint = hintMap[status] || "璇锋眰澶辫触";
+  return new Error(`${prefix}: HTTP ${status}锛?{hint}${detail ? `銆傝繑鍥烇細${detail}` : ""}`);
 }
 
 function getErrorMessage(error) {
-  return error instanceof Error ? error.message : String(error || "未知错误");
+  return error instanceof Error ? error.message : String(error || "鏈煡閿欒");
 }
+

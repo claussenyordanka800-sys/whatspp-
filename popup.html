@@ -15,7 +15,7 @@
     <main>
       <label class="switch-row">
         <input id="enabled" type="checkbox">
-        <span>翻译状态</span>
+        <span>翻译开关</span>
       </label>
 
       <section class="engine-section">
@@ -47,7 +47,7 @@
       </label>
 
       <fieldset>
-        <legend>快速翻译</legend>
+        <legend>发送翻译方式</legend>
         <label class="radio-row">
           <input name="sendTrigger" type="radio" value="enter">
           <span>回车翻译</span>
@@ -60,11 +60,11 @@
 
       <label class="switch-row">
         <input id="forbidChinese" type="checkbox">
-        <span>禁止中文发送</span>
+        <span>禁止中文直接发送</span>
       </label>
 
       <section>
-        <h2>译文设置</h2>
+        <h2>译文样式</h2>
         <div class="style-row">
           <label>
             译文颜色
@@ -89,10 +89,10 @@
     <div id="engineModal" class="modal" hidden>
       <div class="modal-panel" role="dialog" aria-modal="true" aria-labelledby="engineTitle">
         <div class="modal-head">
-          <h2 id="engineTitle">翻译引擎设置</h2>
+          <h2 id="engineTitle">引擎设置</h2>
           <button id="closeEngineSettings" class="icon-btn" type="button" title="关闭">x</button>
         </div>
-        <p class="hint">开启的引擎会显示在主界面；排序会影响失败后的备用顺序。</p>
+        <p class="hint">支持拖拽排序。排序越靠前，优先级越高；失败后会按顺序自动切换备用引擎。</p>
         <div id="providerList" class="provider-list"></div>
         <div class="modal-actions">
           <button id="cancelEngineSettings" class="plain-button" type="button">取消</button>
@@ -105,8 +105,7 @@
       <article class="provider-card">
         <div class="provider-head">
           <div class="sort-actions">
-            <button class="icon-btn move-up" type="button" title="上移">↑</button>
-            <button class="icon-btn move-down" type="button" title="下移">↓</button>
+            <button class="icon-btn drag-handle" type="button" title="拖拽排序">↕</button>
           </div>
           <div class="provider-title">
             <strong></strong>
