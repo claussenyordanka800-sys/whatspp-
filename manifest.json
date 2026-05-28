@@ -1,0 +1,38 @@
+{
+  "manifest_version": 3,
+  "name": "WhatsApp Bubble Translator",
+  "description": "Translate WhatsApp Web messages inside chat bubbles with Google, DeepSeek, or OpenAI-compatible APIs.",
+  "version": "0.1.0",
+  "action": {
+    "default_popup": "popup.html",
+    "default_title": "WhatsApp Translator"
+  },
+  "background": {
+    "service_worker": "background.js"
+  },
+  "permissions": [
+    "storage"
+  ],
+  "host_permissions": [
+    "https://web.whatsapp.com/*",
+    "https://translate.googleapis.com/*",
+    "https://api.deepseek.com/*",
+    "https://*/*",
+    "http://127.0.0.1/*",
+    "http://localhost/*"
+  ],
+  "content_scripts": [
+    {
+      "matches": [
+        "https://web.whatsapp.com/*"
+      ],
+      "js": [
+        "content.js"
+      ],
+      "css": [
+        "content.css"
+      ],
+      "run_at": "document_idle"
+    }
+  ]
+}

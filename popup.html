@@ -1,0 +1,135 @@
+<!doctype html>
+<html lang="zh-CN">
+  <head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <title>WhatsApp 翻译设置</title>
+    <link rel="stylesheet" href="popup.css">
+  </head>
+  <body>
+    <header>
+      <h1>WhatsApp 即时翻译</h1>
+      <span id="saveStatus"></span>
+    </header>
+
+    <main>
+      <label class="switch-row">
+        <input id="enabled" type="checkbox">
+        <span>翻译状态</span>
+      </label>
+
+      <section class="engine-section">
+        <div class="section-head">
+          <h2>翻译引擎</h2>
+          <button id="openEngineSettings" class="link-button" type="button">设置</button>
+        </div>
+        <select id="provider"></select>
+      </section>
+
+      <div class="grid">
+        <label>
+          您的语言
+          <select id="receiveLanguage"></select>
+        </label>
+        <label>
+          联系人语言
+          <select id="sendLanguage"></select>
+        </label>
+      </div>
+
+      <label class="switch-row">
+        <input id="autoDetectLanguage" type="checkbox">
+        <span>智能识别联系人语言</span>
+      </label>
+      <label class="switch-row">
+        <input id="autoReceive" type="checkbox">
+        <span>自动翻译双方消息</span>
+      </label>
+
+      <fieldset>
+        <legend>快速翻译</legend>
+        <label class="radio-row">
+          <input name="sendTrigger" type="radio" value="enter">
+          <span>回车翻译</span>
+        </label>
+        <label class="radio-row">
+          <input name="sendTrigger" type="radio" value="typing">
+          <span>输入时翻译</span>
+        </label>
+        <label class="radio-row">
+          <input name="sendTrigger" type="radio" value="manual">
+          <span>手动翻译</span>
+        </label>
+      </fieldset>
+
+      <label class="switch-row">
+        <input id="forbidChinese" type="checkbox">
+        <span>禁止中文发送</span>
+      </label>
+
+      <section>
+        <h2>译文设置</h2>
+        <div class="style-row">
+          <label>
+            译文颜色
+            <input id="translationColor" type="color">
+          </label>
+          <label>
+            字体大小
+            <select id="translationSize">
+              <option value="small">小</option>
+              <option value="default">默认</option>
+              <option value="large">大</option>
+              <option value="xlarge">特大</option>
+            </select>
+          </label>
+        </div>
+      </section>
+
+      <button id="save" type="button">保存设置</button>
+      <p id="status" role="status"></p>
+    </main>
+
+    <div id="engineModal" class="modal" hidden>
+      <div class="modal-panel" role="dialog" aria-modal="true" aria-labelledby="engineTitle">
+        <div class="modal-head">
+          <h2 id="engineTitle">翻译引擎设置</h2>
+          <button id="closeEngineSettings" class="icon-btn" type="button" title="关闭">x</button>
+        </div>
+        <p class="hint">开启的引擎会显示在主界面；排序会影响失败后的备用顺序。</p>
+        <div id="providerList" class="provider-list"></div>
+        <div class="modal-actions">
+          <button id="cancelEngineSettings" class="plain-button" type="button">取消</button>
+          <button id="saveEngineSettings" class="plain-button save-text" type="button">保存</button>
+        </div>
+      </div>
+    </div>
+
+    <template id="providerTemplate">
+      <article class="provider-card">
+        <div class="provider-head">
+          <div class="sort-actions">
+            <button class="icon-btn move-up" type="button" title="上移">↑</button>
+            <button class="icon-btn move-down" type="button" title="下移">↓</button>
+          </div>
+          <div class="provider-title">
+            <strong></strong>
+            <span></span>
+          </div>
+          <div class="provider-actions">
+            <button class="icon-btn settings-provider" type="button" title="设置">⚙</button>
+            <button class="icon-btn test-provider" type="button" title="测试接口">✓</button>
+            <label class="mini-switch" title="启用">
+              <input class="provider-enabled" type="checkbox">
+              <span></span>
+            </label>
+          </div>
+        </div>
+        <div class="provider-config" hidden></div>
+        <span class="provider-status"></span>
+      </article>
+    </template>
+
+    <script src="popup.js"></script>
+  </body>
+</html>

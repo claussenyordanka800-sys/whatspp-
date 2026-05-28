@@ -1,0 +1,58 @@
+.wa-bubble-translator-output {
+  color: var(--wa-translator-color, #a127b8);
+  display: block;
+  font-size: var(--wa-translator-size, 13.5px);
+  line-height: 1.35;
+  margin: 4px 36px 2px 0;
+  overflow-wrap: anywhere;
+  padding-top: 1px;
+  white-space: pre-wrap;
+}
+
+.wa-bubble-translator-error {
+  color: #c0392b;
+}
+
+.wa-language-prompt {
+  align-items: center;
+  background: rgba(255, 255, 255, 0.96);
+  color: #111827;
+  display: flex;
+  font: 600 13px/1.35 Arial, sans-serif;
+  gap: 6px;
+  justify-content: center;
+  min-height: 28px;
+  padding: 3px 10px 1px;
+  position: relative;
+}
+
+.wa-language-prompt-label span {
+  color: #008a3d;
+  margin: 0 2px;
+}
+
+.wa-language-select {
+  background: transparent;
+  border: 0;
+  color: #111827;
+  font: 700 13px/1.2 Arial, sans-serif;
+  max-width: 96px;
+  outline: none;
+  padding: 1px 16px 1px 2px;
+}
+
+.wa-language-prompt-busy::after,
+.wa-language-prompt-notice::after {
+  background: rgba(255, 255, 255, 0.98);
+  color: #7c2bbf;
+  content: attr(data-notice);
+  inset: 0;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  position: absolute;
+}
+
+.wa-language-prompt-busy:not(.wa-language-prompt-notice)::after {
+  content: "\7ffb\8bd1\4e2d...";
+}
