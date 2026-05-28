@@ -1,83 +1,54 @@
 .wa-bubble-translator-output {
-  background: rgba(255, 255, 255, 0.38);
-  border: 1px solid rgba(11, 143, 111, 0.14);
-  border-radius: 7px;
-  color: var(--wa-translator-color, #8a2aa8);
+  color: var(--wa-translator-color, #a127b8);
   display: block;
   font-size: var(--wa-translator-size, 13.5px);
-  font-weight: 650;
-  line-height: 1.42;
-  margin: 6px 34px 2px 0;
+  line-height: 1.35;
+  margin: 4px 36px 2px 0;
   overflow-wrap: anywhere;
-  padding: 5px 7px;
+  padding-top: 1px;
   white-space: pre-wrap;
 }
 
-.wa-bubble-translator-output::before {
-  color: #0b8f6f;
-  content: "译";
-  display: inline-block;
-  font-size: 11px;
-  font-weight: 800;
-  margin-right: 6px;
-  opacity: 0.9;
-}
-
 .wa-bubble-translator-error {
-  border-color: rgba(180, 35, 24, 0.22);
-  color: #b42318;
-}
-
-.wa-bubble-translator-error::before {
-  color: #b42318;
-  content: "!";
+  color: #c0392b;
 }
 
 .wa-language-prompt {
   align-items: center;
-  background: rgba(250, 255, 252, 0.96);
-  border-bottom: 1px solid rgba(11, 143, 111, 0.14);
-  color: #15201c;
+  background: rgba(255, 255, 255, 0.96);
+  color: #111827;
   display: flex;
-  font: 700 13px/1.35 "Microsoft YaHei UI", "PingFang SC", "Segoe UI", sans-serif;
-  gap: 8px;
+  font: 600 13px/1.35 Arial, sans-serif;
+  gap: 6px;
   justify-content: center;
-  min-height: 32px;
-  padding: 5px 10px;
+  min-height: 28px;
+  padding: 3px 10px 1px;
   position: relative;
 }
 
 .wa-language-prompt-label span {
-  color: #0b8f6f;
-  font-weight: 800;
+  color: #008a3d;
   margin: 0 2px;
 }
 
 .wa-language-select {
-  background: #edf7f2;
-  border: 1px solid rgba(11, 143, 111, 0.18);
-  border-radius: 999px;
-  color: #10241e;
-  font: 800 13px/1.2 "Microsoft YaHei UI", "PingFang SC", "Segoe UI", sans-serif;
-  max-width: 112px;
+  background: transparent;
+  border: 0;
+  color: #111827;
+  font: 700 13px/1.2 Arial, sans-serif;
+  max-width: 96px;
   outline: none;
-  padding: 3px 8px;
-}
-
-.wa-language-select:focus {
-  border-color: #0b8f6f;
-  box-shadow: 0 0 0 3px rgba(11, 143, 111, 0.14);
+  padding: 1px 16px 1px 2px;
 }
 
 .wa-language-prompt-busy::after,
 .wa-language-prompt-notice::after {
-  align-items: center;
-  background: rgba(250, 255, 252, 0.98);
-  color: #0b7058;
+  background: rgba(255, 255, 255, 0.98);
+  color: #7c2bbf;
   content: attr(data-notice);
-  display: flex;
-  font-weight: 800;
   inset: 0;
+  display: flex;
+  align-items: center;
   justify-content: center;
   position: absolute;
 }

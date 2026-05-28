@@ -7,44 +7,26 @@
     <link rel="stylesheet" href="popup.css">
   </head>
   <body>
-    <header class="app-header">
-      <div>
-        <span class="eyebrow">Bubble Translator</span>
-        <h1>WhatsApp 即时翻译</h1>
-      </div>
-      <span id="saveStatus" class="save-chip" aria-live="polite"></span>
+    <header>
+      <h1>WhatsApp 即时翻译</h1>
+      <span id="saveStatus"></span>
     </header>
 
     <main>
-      <section class="panel hero-panel">
-        <label class="switch-row primary-switch">
-          <input id="enabled" type="checkbox">
-          <span>
-            <strong>翻译状态</strong>
-            <small>开启后在 WhatsApp Web 气泡内显示译文</small>
-          </span>
-        </label>
-      </section>
+      <label class="switch-row">
+        <input id="enabled" type="checkbox">
+        <span>翻译状态</span>
+      </label>
 
-      <section class="panel engine-section">
+      <section class="engine-section">
         <div class="section-head">
-          <div>
-            <span class="section-kicker">Engine</span>
-            <h2>翻译引擎</h2>
-          </div>
+          <h2>翻译引擎</h2>
           <button id="openEngineSettings" class="link-button" type="button">设置</button>
         </div>
         <select id="provider"></select>
       </section>
 
-      <section class="panel">
-        <div class="section-head compact">
-          <div>
-            <span class="section-kicker">Language</span>
-            <h2>语言方向</h2>
-          </div>
-        </div>
-        <div class="grid">
+      <div class="grid">
         <label>
           您的语言
           <select id="receiveLanguage"></select>
@@ -53,19 +35,18 @@
           联系人语言
           <select id="sendLanguage"></select>
         </label>
-        </div>
+      </div>
 
-        <label class="switch-row">
-          <input id="autoDetectLanguage" type="checkbox">
-          <span>智能识别联系人语言</span>
-        </label>
-        <label class="switch-row">
-          <input id="autoReceive" type="checkbox">
-          <span>自动翻译双方消息</span>
-        </label>
-      </section>
+      <label class="switch-row">
+        <input id="autoDetectLanguage" type="checkbox">
+        <span>智能识别联系人语言</span>
+      </label>
+      <label class="switch-row">
+        <input id="autoReceive" type="checkbox">
+        <span>自动翻译双方消息</span>
+      </label>
 
-      <fieldset class="panel trigger-panel">
+      <fieldset>
         <legend>快速翻译</legend>
         <label class="radio-row">
           <input name="sendTrigger" type="radio" value="enter">
@@ -81,13 +62,13 @@
         </label>
       </fieldset>
 
-      <section class="panel">
-        <div class="section-head compact">
-          <div>
-            <span class="section-kicker">Output</span>
-            <h2>译文样式</h2>
-          </div>
-        </div>
+      <label class="switch-row">
+        <input id="forbidChinese" type="checkbox">
+        <span>禁止中文发送</span>
+      </label>
+
+      <section>
+        <h2>译文设置</h2>
         <div class="style-row">
           <label>
             译文颜色
@@ -103,10 +84,6 @@
             </select>
           </label>
         </div>
-        <label class="switch-row danger-row">
-          <input id="forbidChinese" type="checkbox">
-          <span>禁止中文发送</span>
-        </label>
       </section>
 
       <button id="save" type="button">保存设置</button>
@@ -116,10 +93,7 @@
     <div id="engineModal" class="modal" hidden>
       <div class="modal-panel" role="dialog" aria-modal="true" aria-labelledby="engineTitle">
         <div class="modal-head">
-          <div>
-            <span class="section-kicker">Routing</span>
-            <h2 id="engineTitle">翻译引擎设置</h2>
-          </div>
+          <h2 id="engineTitle">翻译引擎设置</h2>
           <button id="closeEngineSettings" class="icon-btn" type="button" title="关闭">x</button>
         </div>
         <p class="hint">开启的引擎会显示在主界面；排序会影响失败后的备用顺序。</p>
