@@ -176,7 +176,8 @@ async function testPopup() {
   assert.equal(document.querySelectorAll(".provider-card").length, 8);
   document.querySelector("#save").click();
   await tick();
-  assert.equal(window.__savedSettings.sendTrigger, "manual");
+  assert.equal(document.querySelector('input[name="sendTrigger"][value="manual"]'), null);
+  assert.equal(window.__savedSettings.sendTrigger, "enter");
   window.close();
 }
 
@@ -256,11 +257,10 @@ async function testContentScript() {
   window.eval(fs.readFileSync(path.join(rootDir, "content.js"), "utf8"));
   await tick();
   assert.equal(document.querySelector(".wa-bubble-translator-output").textContent, "translated bubble");
-  assert.equal(document.querySelector(".wa-manual-translate").hidden, false);
-  document.querySelector(".wa-manual-translate").click();
-  await tick();
-  assert.equal(document.querySelector("[role='textbox']").textContent, "translated draft");
-  assert.deepEqual(window.__messages.map((messagePayload) => messagePayload.payload.direction), ["receive", "send"]);
+  assert.equal(document.querySelector(".wa-manual-translate"), null);
+  assert.deepEqual(window.__messages.map((messagePayload) => messagePayload.payload.direction), ["receive"]);
+  assert.equal(window.__messages[0].payload.targetLanguage, "zh-CN");
+  assert.equal(window.__messages[0].payload.text, "Hello");
   window.close();
 }
 

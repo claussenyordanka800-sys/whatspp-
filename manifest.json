@@ -1,11 +1,11 @@
 {
   "manifest_version": 3,
-  "name": "WhatsApp Bubble Translator",
+  "name": "WhatsApp翻译无忧",
   "description": "Translate WhatsApp Web messages inside chat bubbles with Google, DeepSeek, or OpenAI-compatible APIs.",
   "version": "0.1.0",
   "action": {
     "default_popup": "popup.html",
-    "default_title": "WhatsApp Translator"
+    "default_title": "WhatsApp翻译无忧"
   },
   "background": {
     "service_worker": "background.js"

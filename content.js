@@ -94,7 +94,7 @@ async function init() {
 
 async function loadSettings() {
   const response = await chrome.storage.sync.get("settings");
-  return {
+  const settings = {
     enabled: true,
     provider: "google",
     receiveLanguage: "zh-CN",
@@ -108,6 +108,11 @@ async function loadSettings() {
     translationSize: "default",
     ...(response.settings || {})
   };
+  if (settings.sendTrigger === "manual") {
+    settings.sendTrigger = "enter";
+    settings.autoSend = false;
+  }
+  return settings;
 }
 
 function installObserver() {
@@ -214,7 +219,7 @@ async function translateBubble(messageNode, textContainer, forceRefresh) {
       type: "translate",
       payload: {
         text,
-        targetLanguage: state.settings.receiveLanguage || "zh-CN",
+        targetLanguage: getReceiveLanguage(),
         direction: "receive"
       }
     });
@@ -305,13 +310,7 @@ function installLanguagePrompt(footer) {
     updateLanguagePrompt();
   });
 
-  const button = document.createElement("button");
-  button.className = "wa-manual-translate";
-  button.type = "button";
-  button.textContent = "翻译";
-  button.addEventListener("click", () => translateComposer(true));
-
-  prompt.append(label, select, button);
+  prompt.append(label, select);
   footer.insertBefore(prompt, footer.firstChild);
 }
 
@@ -324,14 +323,10 @@ function updateLanguagePrompt() {
   const language = getActiveSendLanguage();
   const label = prompt.querySelector(".wa-language-prompt-label");
   const select = prompt.querySelector(".wa-language-select");
-  const button = prompt.querySelector(".wa-manual-translate");
   const languageText = LANGUAGE_LABELS[language] || language;
 
   label.innerHTML = `\u5f53\u524d\u573a\u666f\u8bed\u8a00\u4e3a<span>${escapeHtml(languageText)}</span>\uff0c\u5207\u6362\u8bed\u8a00`;
   select.value = language;
-  if (button) {
-    button.hidden = state.settings.sendTrigger !== "manual";
-  }
 }
 
 function installDraftWatcher(input) {
@@ -497,6 +492,10 @@ async function updateDetectedLanguage() {
 
 function getActiveSendLanguage() {
   return state.manualLanguage || state.detectedLanguage || state.settings.sendLanguage || "en";
+}
+
+function getReceiveLanguage() {
+  return state.settings.receiveLanguage || "zh-CN";
 }
 
 async function saveSettings(partial) {

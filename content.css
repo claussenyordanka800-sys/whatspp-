@@ -41,24 +41,6 @@
   padding: 1px 16px 1px 2px;
 }
 
-.wa-manual-translate {
-  background: #008a3d;
-  border: 0;
-  border-radius: 4px;
-  color: #fff;
-  cursor: pointer;
-  flex: 0 0 auto;
-  font: 700 12px/1 Arial, sans-serif;
-  margin: 0 0 0 2px;
-  min-height: 22px;
-  padding: 4px 8px;
-  width: auto;
-}
-
-.wa-manual-translate:hover {
-  background: #087033;
-}
-
 .wa-language-prompt-busy::after,
 .wa-language-prompt-notice::after {
   background: rgba(255, 255, 255, 0.98);

@@ -138,6 +138,10 @@ function migrateSettings(settings) {
     model: merged.providers.deepseek?.model || "deepseek-chat",
     models: mergeModels(DEEPSEEK_MODELS, merged.providers.deepseek?.models)
   };
+  if (merged.sendTrigger === "manual") {
+    merged.sendTrigger = "enter";
+    merged.autoSend = false;
+  }
   ensureProviderSelection(merged);
   return merged;
 }
@@ -152,7 +156,7 @@ function renderSettings() {
       : state.settings[field] ?? "";
   }
 
-  const trigger = state.settings.sendTrigger || "enter";
+  const trigger = state.settings.sendTrigger === "typing" ? "typing" : "enter";
   const radio = document.querySelector(`input[name="sendTrigger"][value="${trigger}"]`);
   if (radio) radio.checked = true;
 
