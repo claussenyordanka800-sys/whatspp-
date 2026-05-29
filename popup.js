@@ -1,5 +1,6 @@
-﻿const DEFAULT_PROVIDER_ORDER = ["google", "volcano", "deepseek", "deepl", "openai", "doubao", "gemini", "custom"];
+﻿const DEFAULT_PROVIDER_ORDER = ["google", "microsoft", "deepseek", "deepl", "openai", "doubao", "gemini", "custom"];
 const LEGACY_PROVIDER_ORDER = ["volcano", "deepl", "openai", "deepseek", "doubao", "gemini", "custom", "google"];
+const REMOVED_PROVIDERS = new Set(["volcano"]);
 
 const DEEPSEEK_MODELS = [
   { id: "deepseek-chat", name: "deepseek-chat (general)" },
@@ -13,8 +14,8 @@ const DEFAULT_SETTINGS = {
   provider: "google",
   providerOrder: DEFAULT_PROVIDER_ORDER,
   providerEnabled: {
-    volcano: true,
     google: true,
+    microsoft: true,
     deepseek: true,
     deepl: false,
     openai: false,
@@ -32,8 +33,11 @@ const DEFAULT_SETTINGS = {
   translationColor: "#a127b8",
   translationSize: "default",
   providers: {
-    volcano: { baseUrl: "https://translate.volcengine.com/crx/translate/v1/" },
     google: { baseUrl: "https://translate.googleapis.com" },
+    microsoft: {
+      authUrl: "https://edge.microsoft.com/translate/auth",
+      baseUrl: "https://api-edge.cognitive.microsofttranslator.com/translate"
+    },
     deepseek: { apiKey: "", baseUrl: "https://api.deepseek.com", model: "deepseek-chat", models: DEEPSEEK_MODELS },
     deepl: { apiKey: "", baseUrl: "https://api-free.deepl.com/v2", model: "translate" },
     openai: { apiKey: "", baseUrl: "https://api.openai.com/v1", model: "" },
@@ -44,8 +48,8 @@ const DEFAULT_SETTINGS = {
 };
 
 const PROVIDERS = {
-  volcano: { name: "火山翻译", desc: "内置免费翻译", type: "free" },
   google: { name: "谷歌翻译", desc: "免密钥，速度快", type: "free" },
+  microsoft: { name: "微软翻译", desc: "免密钥，长文本备用", type: "free" },
   deepseek: { name: "DeepSeek", desc: "DeepSeek 大语言模型", type: "openai" },
   deepl: { name: "DeepL", desc: "高质量机器翻译", type: "deepl" },
   openai: { name: "OpenAI", desc: "OpenAI 兼容大语言模型", type: "openai" },
@@ -55,8 +59,8 @@ const PROVIDERS = {
 };
 
 const PROVIDER_ICONS = {
-  volcano: "🌋",
   google: "G",
+  microsoft: "M",
   deepseek: "DS",
   deepl: "D",
   openai: "AI",
@@ -66,7 +70,6 @@ const PROVIDER_ICONS = {
 };
 
 const PROVIDER_LOGOS = {
-  volcano: "assets/logos/volcano.svg",
   google: "assets/logos/google.svg",
   deepseek: "assets/logos/deepseek.svg",
   deepl: "assets/logos/deepl.svg",
@@ -131,11 +134,13 @@ async function loadSettings() {
 function migrateSettings(settings) {
   const merged = structuredClone(DEFAULT_SETTINGS);
   Object.assign(merged, settings);
-  merged.providerOrder = shouldUpgradeProviderOrder(settings.providerOrder)
-    ? DEFAULT_PROVIDER_ORDER.slice()
-    : [...settings.providerOrder, ...DEFAULT_PROVIDER_ORDER.filter((item) => !settings.providerOrder.includes(item))];
+  merged.providerOrder = normalizeProviderOrder(settings.providerOrder);
   merged.providerEnabled = { ...DEFAULT_SETTINGS.providerEnabled, ...(settings.providerEnabled || {}) };
   merged.providers = { ...DEFAULT_SETTINGS.providers, ...(settings.providers || {}) };
+  for (const provider of REMOVED_PROVIDERS) {
+    delete merged.providerEnabled[provider];
+    delete merged.providers[provider];
+  }
 
   if (settings.deepseekApiKey || settings.deepseekBaseUrl || settings.deepseekModel) {
     merged.providers.deepseek = {
@@ -615,9 +620,17 @@ function showSaveStatus(text) {
   }
 }
 
+function normalizeProviderOrder(order) {
+  if (shouldUpgradeProviderOrder(order)) {
+    return DEFAULT_PROVIDER_ORDER.slice();
+  }
+  const clean = order.filter((provider) => DEFAULT_PROVIDER_ORDER.includes(provider) && !REMOVED_PROVIDERS.has(provider));
+  return [...clean, ...DEFAULT_PROVIDER_ORDER.filter((provider) => !clean.includes(provider))];
+}
+
 function shouldUpgradeProviderOrder(order) {
   if (!Array.isArray(order) || !order.length) return true;
-  return JSON.stringify(order) === JSON.stringify(LEGACY_PROVIDER_ORDER);
+  return JSON.stringify(order) === JSON.stringify(LEGACY_PROVIDER_ORDER) || order.includes("volcano");
 }
 
 function normalizeDeepSeekBaseUrl(baseUrl) {

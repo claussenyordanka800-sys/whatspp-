@@ -1,5 +1,6 @@
-﻿const DEFAULT_PROVIDER_ORDER = ["google", "volcano", "deepseek", "deepl", "openai", "doubao", "gemini", "custom"];
+﻿const DEFAULT_PROVIDER_ORDER = ["google", "microsoft", "deepseek", "deepl", "openai", "doubao", "gemini", "custom"];
 const LEGACY_PROVIDER_ORDER = ["volcano", "deepl", "openai", "deepseek", "doubao", "gemini", "custom", "google"];
+const REMOVED_PROVIDERS = new Set(["volcano"]);
 const DEEPSEEK_FALLBACK_MODELS = [
   { id: "deepseek-chat", name: "deepseek-chat (general)" },
   { id: "deepseek-reasoner", name: "deepseek-reasoner (reasoning)" },
@@ -12,8 +13,8 @@ const DEFAULT_SETTINGS = {
   provider: "google",
   providerOrder: DEFAULT_PROVIDER_ORDER,
   providerEnabled: {
-    volcano: true,
     google: true,
+    microsoft: true,
     deepseek: true,
     deepl: false,
     openai: false,
@@ -31,8 +32,11 @@ const DEFAULT_SETTINGS = {
   translationColor: "#a127b8",
   translationSize: "default",
   providers: {
-    volcano: { baseUrl: "https://translate.volcengine.com/crx/translate/v1/" },
     google: { baseUrl: "https://translate.googleapis.com" },
+    microsoft: {
+      authUrl: "https://edge.microsoft.com/translate/auth",
+      baseUrl: "https://api-edge.cognitive.microsofttranslator.com/translate"
+    },
     deepseek: { apiKey: "", baseUrl: "https://api.deepseek.com", model: "deepseek-chat", models: DEEPSEEK_FALLBACK_MODELS },
     deepl: { apiKey: "", baseUrl: "https://api-free.deepl.com/v2", model: "translate" },
     openai: { apiKey: "", baseUrl: "https://api.openai.com/v1", model: "" },
@@ -43,8 +47,8 @@ const DEFAULT_SETTINGS = {
 };
 
 const PROVIDER_NAMES = {
-  volcano: "火山翻译",
   google: "谷歌翻译",
+  microsoft: "微软翻译",
   deepseek: "DeepSeek",
   deepl: "DeepL",
   openai: "OpenAI",
@@ -223,11 +227,13 @@ async function getSettings() {
 function migrateSettings(settings) {
   const merged = structuredClone(DEFAULT_SETTINGS);
   Object.assign(merged, settings);
-  merged.providerOrder = shouldUpgradeProviderOrder(settings.providerOrder)
-    ? DEFAULT_PROVIDER_ORDER.slice()
-    : [...settings.providerOrder, ...DEFAULT_PROVIDER_ORDER.filter((item) => !settings.providerOrder.includes(item))];
+  merged.providerOrder = normalizeProviderOrder(settings.providerOrder);
   merged.providerEnabled = { ...DEFAULT_SETTINGS.providerEnabled, ...(settings.providerEnabled || {}) };
   merged.providers = { ...DEFAULT_SETTINGS.providers, ...(settings.providers || {}) };
+  for (const provider of REMOVED_PROVIDERS) {
+    delete merged.providerEnabled[provider];
+    delete merged.providers[provider];
+  }
 
   if (settings.deepseekApiKey || settings.deepseekBaseUrl || settings.deepseekModel) {
     merged.providers.deepseek = {
@@ -266,8 +272,8 @@ async function translateByProvider(provider, options) {
   if (provider === "google") {
     return translateWithGoogle(options.text, options.targetLanguage);
   }
-  if (provider === "volcano") {
-    return translateWithVolcanoFree(options.text, options.targetLanguage, config);
+  if (provider === "microsoft") {
+    return translateWithMicrosoftEdge(options.text, options.targetLanguage, config);
   }
   if (provider === "deepl") {
     return translateWithDeepL(options.text, options.targetLanguage, config);
@@ -286,6 +292,15 @@ function normalizeProviderConfig(provider, config) {
 }
 
 async function translateWithGoogle(text, targetLanguage) {
+  const chunks = splitTextForTranslation(text, 1200);
+  const translated = [];
+  for (const chunk of chunks) {
+    translated.push(await translateWithGoogleChunk(chunk, targetLanguage));
+  }
+  return translated.join("\n").trim();
+}
+
+async function translateWithGoogleChunk(text, targetLanguage) {
   const params = new URLSearchParams({
     client: "gtx",
     sl: "auto",
@@ -301,20 +316,48 @@ async function translateWithGoogle(text, targetLanguage) {
   return Array.isArray(data?.[0]) ? data[0].map((part) => part?.[0] || "").join("") : "";
 }
 
-async function translateWithVolcanoFree(text, targetLanguage, config) {
-  const response = await fetch(config.baseUrl || DEFAULT_SETTINGS.providers.volcano.baseUrl, {
+async function translateWithMicrosoftEdge(text, targetLanguage, config) {
+  const token = await getMicrosoftEdgeToken(config);
+  const chunks = splitTextForTranslation(text, 4500);
+  const translated = [];
+  for (const chunk of chunks) {
+    translated.push(await translateWithMicrosoftEdgeChunk(chunk, targetLanguage, config, token));
+  }
+  return translated.join("\n").trim();
+}
+
+async function getMicrosoftEdgeToken(config) {
+  const response = await fetch(config.authUrl || DEFAULT_SETTINGS.providers.microsoft.authUrl);
+  if (!response.ok) {
+    throw await buildHttpError("微软翻译授权失败", response, "microsoft");
+  }
+  const token = (await response.text()).trim();
+  if (!token) {
+    throw new Error("微软翻译授权为空");
+  }
+  return token;
+}
+
+async function translateWithMicrosoftEdgeChunk(text, targetLanguage, config, token) {
+  const baseUrl = config.baseUrl || DEFAULT_SETTINGS.providers.microsoft.baseUrl;
+  const params = new URLSearchParams({
+    "api-version": "3.0",
+    from: "",
+    to: mapMicrosoftLanguage(targetLanguage)
+  });
+  const response = await fetch(`${baseUrl}?${params.toString()}`, {
     method: "POST",
-    headers: { "Content-Type": "application/json" },
-    body: JSON.stringify({
-      text,
-      target_language: targetLanguage
-    })
+    headers: {
+      "Content-Type": "application/json",
+      Authorization: `Bearer ${token}`
+    },
+    body: JSON.stringify([{ Text: text }])
   });
   if (!response.ok) {
-    throw await buildHttpError("鐏北缈昏瘧澶辫触", response);
+    throw await buildHttpError("微软翻译失败", response, "microsoft");
   }
   const data = await response.json();
-  return data.translation || data.data?.translation || data.text || "";
+  return data?.[0]?.translations?.[0]?.text || "";
 }
 
 async function translateWithDeepL(text, targetLanguage, config) {
@@ -456,11 +499,59 @@ function mapDeepLLanguage(language) {
   return map[language] || language.toUpperCase();
 }
 
+function normalizeProviderOrder(order) {
+  if (shouldUpgradeProviderOrder(order)) {
+    return DEFAULT_PROVIDER_ORDER.slice();
+  }
+  const clean = order.filter((provider) => DEFAULT_PROVIDER_ORDER.includes(provider) && !REMOVED_PROVIDERS.has(provider));
+  return [...clean, ...DEFAULT_PROVIDER_ORDER.filter((provider) => !clean.includes(provider))];
+}
+
 function shouldUpgradeProviderOrder(order) {
   if (!Array.isArray(order) || !order.length) {
     return true;
   }
-  return JSON.stringify(order) === JSON.stringify(LEGACY_PROVIDER_ORDER);
+  return JSON.stringify(order) === JSON.stringify(LEGACY_PROVIDER_ORDER) || order.includes("volcano");
+}
+
+function splitTextForTranslation(text, maxLength) {
+  const source = normalizeText(text);
+  if (!source || source.length <= maxLength) {
+    return source ? [source] : [];
+  }
+
+  const chunks = [];
+  let current = "";
+  for (const part of source.split(/(\n+)/)) {
+    if (!part) continue;
+    if ((current + part).length <= maxLength) {
+      current += part;
+      continue;
+    }
+    if (current.trim()) {
+      chunks.push(current.trim());
+      current = "";
+    }
+    if (part.length <= maxLength) {
+      current = part;
+      continue;
+    }
+    for (let index = 0; index < part.length; index += maxLength) {
+      chunks.push(part.slice(index, index + maxLength).trim());
+    }
+  }
+  if (current.trim()) {
+    chunks.push(current.trim());
+  }
+  return chunks;
+}
+
+function mapMicrosoftLanguage(language) {
+  const map = {
+    "zh-CN": "zh-Hans",
+    "zh-TW": "zh-Hant"
+  };
+  return map[language] || language;
 }
 
 function prepareDeepSeekConfig(config) {

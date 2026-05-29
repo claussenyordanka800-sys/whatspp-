@@ -16,6 +16,8 @@
   "host_permissions": [
     "https://web.whatsapp.com/*",
     "https://translate.googleapis.com/*",
+    "https://edge.microsoft.com/*",
+    "https://api-edge.cognitive.microsofttranslator.com/*",
     "https://api.deepseek.com/*",
     "https://*/*",
     "http://127.0.0.1/*",

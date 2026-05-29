@@ -545,10 +545,11 @@ input[type="color"] {
 
 .provider-title {
   min-width: 0;
-  display: flex;
-  align-items: center;
-  align-self: center;
-  gap: 8px;
+  display: grid;
+  grid-template-columns: 26px minmax(0, 1fr);
+  column-gap: 8px;
+  row-gap: 2px;
+  align-self: start;
 }
 
 .provider-icon {
@@ -565,6 +566,9 @@ input[type="color"] {
   font-weight: 800;
   letter-spacing: 0;
   overflow: hidden;
+  grid-column: 1;
+  grid-row: 1 / span 2;
+  align-self: start;
 }
 
 .provider-icon img {
@@ -575,22 +579,23 @@ input[type="color"] {
 }
 
 .provider-title strong {
-  flex: 0 0 auto;
+  grid-column: 2;
   font-size: 14px;
   line-height: 1.25;
   font-weight: 700;
-  white-space: nowrap;
+  white-space: normal;
 }
 
 .provider-title .provider-tag {
-  min-width: 0;
+  grid-column: 2;
   color: var(--tag);
-  font-size: 13px;
-  line-height: 1.55;
+  font-size: 12px;
+  line-height: 1.35;
   font-weight: 400;
-  overflow: hidden;
-  text-overflow: ellipsis;
-  white-space: nowrap;
+  overflow: visible;
+  text-overflow: unset;
+  white-space: normal;
+  word-break: break-word;
 }
 
 .provider-actions {

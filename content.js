@@ -4,6 +4,8 @@ const TEXT_SELECTORS = [
   "div.copyable-text span.selectable-text",
   "span._ao3e.selectable-text.copyable-text",
   "span._akbu",
+  "div.copyable-text",
+  "div[dir='auto']",
   ".copyable-text"
 ];
 const INPUT_SELECTORS = [
@@ -18,6 +20,11 @@ const QUOTED_SELECTORS = [
   "[role='button'] img",
   "canvas",
   "video"
+];
+const SYSTEM_LINE_PATTERNS = [
+  /^[↪↩⤴⤵]\s*/,
+  /^(?:已转发|转发|轉發|forwarded|reenviado|reenviada|replying to|reply)$/i,
+  /^(?:图片|照片|image|video|sticker|gif|document|audio|voice message)$/i
 ];
 
 const LANGUAGE_LABELS = {
@@ -72,7 +79,7 @@ const state = {
   lastDraftSource: "",
   isReplacingDraft: false,
   isDetectingLanguage: false,
-  translatingMessages: new WeakSet()
+  translatingContainers: new WeakSet()
 };
 
 init();
@@ -158,47 +165,74 @@ function applyTranslationStyle() {
 }
 
 function enhanceMessage(messageNode) {
-  const textContainer = findTextContainer(messageNode);
-  if (!textContainer) {
-    return;
-  }
-
-  const text = extractMessageText(textContainer);
-  if (!text) {
+  const containers = findAllTextContainers(messageNode);
+  if (!containers.length) {
     return;
   }
 
   messageNode.dataset.waTranslatorReady = "1";
 
-  if (shouldAutoTranslateMessage(messageNode, textContainer)) {
-    translateBubble(messageNode, textContainer, false);
+  for (const textContainer of containers) {
+    if (shouldAutoTranslateMessage(messageNode, textContainer)) {
+      translateBubble(messageNode, textContainer, false);
+    }
   }
 }
 
 function shouldAutoTranslateMessage(messageNode, textContainer) {
-  if (!state.settings.enabled || !state.settings.autoReceive) {
+  if (!state.settings.enabled) {
     return false;
   }
-  if (!messageNode.classList.contains("message-in") && !messageNode.classList.contains("message-out")) {
+  const isIncoming = messageNode.classList.contains("message-in");
+  const isOutgoing = messageNode.classList.contains("message-out");
+  if (!isIncoming && !isOutgoing) {
+    return false;
+  }
+  // 收到的消息：受 autoReceive 开关控制
+  if (isIncoming && !state.settings.autoReceive) {
     return false;
   }
   if (textContainer.querySelector(":scope > .wa-bubble-translator-output")) {
     return false;
   }
-  if (state.translatingMessages.has(messageNode)) {
+  if (state.translatingContainers.has(textContainer)) {
     return false;
   }
-  return isInViewport(messageNode);
+  return true;
 }
 
-function findTextContainer(messageNode) {
+// 找出消息节点内所有独立的文本容器（不互相包含），逐个翻译
+function findAllTextContainers(messageNode) {
+  const candidates = new Map();
+
   for (const selector of TEXT_SELECTORS) {
-    const node = messageNode.querySelector(selector);
-    if (node && extractMessageText(node)) {
-      return node;
+    for (const node of messageNode.querySelectorAll(selector)) {
+      if (!isRenderableNode(node, messageNode)) continue;
+      if (candidates.has(node)) continue;
+      const text = extractMessageText(node);
+      if (text) candidates.set(node, text);
     }
   }
-  return null;
+
+  // 后备：扫描所有含直接文本的 span/div
+  if (!candidates.size) {
+    for (const node of messageNode.querySelectorAll("span, div")) {
+      if (node.hidden || node.getAttribute("aria-hidden") === "true") continue;
+      const directText = [...node.childNodes]
+        .filter((n) => n.nodeType === Node.TEXT_NODE)
+        .map((n) => n.textContent.trim())
+        .join("");
+      if (!directText) continue;
+      const text = extractMessageText(node);
+      if (text) candidates.set(node, text);
+    }
+  }
+
+  // 只保留最外层容器（去掉被其他节点包含的子节点）
+  const nodes = [...candidates.keys()];
+  return nodes.filter(
+    (node) => !nodes.some((other) => other !== node && other.contains(node))
+  );
 }
 
 async function translateBubble(messageNode, textContainer, forceRefresh) {
@@ -207,7 +241,7 @@ async function translateBubble(messageNode, textContainer, forceRefresh) {
     return;
   }
 
-  state.translatingMessages.add(messageNode);
+  state.translatingContainers.add(textContainer);
   if (forceRefresh) {
     removeOutput(textContainer);
   } else {
@@ -232,7 +266,7 @@ async function translateBubble(messageNode, textContainer, forceRefresh) {
   } catch (error) {
     insertTranslation(textContainer, error.message || "\u7ffb\u8bd1\u5931\u8d25", true);
   } finally {
-    state.translatingMessages.delete(messageNode);
+    state.translatingContainers.delete(textContainer);
   }
 }
 
@@ -257,16 +291,30 @@ function removeError(textContainer) {
 
 function extractMessageText(textContainer) {
   const clone = textContainer.cloneNode(true);
-  clone.querySelectorAll(".wa-bubble-translator-output, [data-icon], svg, img, canvas, video").forEach((node) => node.remove());
+  // 移除翻译输出、图标、媒体，以及 WhatsApp 自带的时间/状态 UI 元素
+  clone.querySelectorAll([
+    ".wa-bubble-translator-output",
+    "[data-icon]",
+    "svg",
+    "img",
+    "canvas",
+    "video",
+    "[data-testid='msg-meta']",
+    "[data-testid='msg-time']",
+    "[data-testid='msg-dblchk']",
+    "[data-testid='msg-check']"
+  ].join(",")).forEach((node) => node.remove());
   clone.querySelectorAll(QUOTED_SELECTORS.join(",")).forEach((node) => removeBlock(node, clone));
 
-  const textParts = [...clone.querySelectorAll("span.selectable-text, span._ao3e, span[dir='auto']")]
+  const textParts = [...clone.querySelectorAll("span.selectable-text, span._ao3e, span[dir='auto'], div[dir='auto'], li")]
     .filter((node) => !node.querySelector(".wa-bubble-translator-output"))
     .map((node) => normalizeMessageBody(node.innerText || node.textContent || ""))
     .filter(Boolean);
 
   const raw = textParts.length ? textParts.join("\n") : (clone.innerText || clone.textContent || "");
-  return normalizeMessageBody(raw);
+  const structuredText = normalizeMessageBody(raw);
+  const fallbackText = normalizeMessageBody(clone.innerText || clone.textContent || "");
+  return fallbackText.length > structuredText.length ? fallbackText : structuredText;
 }
 
 function enhanceComposer() {
@@ -529,6 +577,30 @@ function isInViewport(node) {
   return rect.bottom > 0 && rect.top < height;
 }
 
+function isRenderableNode(node, scopeRoot) {
+  if (!(node instanceof Element)) {
+    return false;
+  }
+  if (scopeRoot && !scopeRoot.contains(node)) {
+    return false;
+  }
+  if (node.hidden || node.getAttribute("aria-hidden") === "true") {
+    return false;
+  }
+  const inlineStyle = (node.getAttribute("style") || "").toLowerCase();
+  if (inlineStyle.includes("display:none") || inlineStyle.includes("display: none") || inlineStyle.includes("visibility:hidden") || inlineStyle.includes("visibility: hidden")) {
+    return false;
+  }
+  if (node.closest("[hidden], [aria-hidden='true']")) {
+    return false;
+  }
+  const style = window.getComputedStyle(node);
+  if (style.display === "none" || style.visibility === "hidden" || style.opacity === "0") {
+    return false;
+  }
+  return true;
+}
+
 function containsChinese(text) {
   return /[\u3400-\u9fff]/.test(text);
 }
@@ -543,19 +615,33 @@ function normalizeText(text) {
 function normalizeMessageBody(text) {
   return normalizeText(text)
     .split("\n")
-    .map((line) => line.replace(/\s+\d{1,2}:\d{2}\s*(?:AM|PM)?\s*$/i, "").trim())
-    .filter((line) => line && !/^\d{1,2}:\d{2}\s*(?:AM|PM)?$/i.test(line))
+    .map((line) => line.replace(/\s*\d{1,2}:\d{2}(?::\d{2})?\s*(?:AM|PM)?\s*$/i, "").trim())
+    .filter((line) => !isSystemBubbleLine(line))
+    .filter((line) => line && !/^\d{1,2}:\d{2}(?::\d{2})?\s*(?:AM|PM)?$/i.test(line))
     .join("\n")
     .trim();
 }
 
-function removeBlock(node, root) {
-  const block = node.closest("[role='button'], [data-pre-plain-text], div") || node;
-  if (block !== root && root.contains(block)) {
-    block.remove();
-  } else {
-    node.remove();
+function isSystemBubbleLine(line) {
+  const clean = normalizeText(line).toLowerCase();
+  if (!clean) {
+    return true;
   }
+  return SYSTEM_LINE_PATTERNS.some((pattern) => pattern.test(clean));
+}
+
+function removeBlock(node, root) {
+  if (node.hasAttribute("data-pre-plain-text")) {
+    const block = node.closest("[data-pre-plain-text]") || node;
+    block.remove();
+    return;
+  }
+  const quotedByLabel = node.closest("[aria-label*='Quoted'], [aria-label*='引用']");
+  if (quotedByLabel && root.contains(quotedByLabel) && quotedByLabel !== root) {
+    quotedByLabel.remove();
+    return;
+  }
+  node.remove();
 }
 
 function escapeHtml(text) {

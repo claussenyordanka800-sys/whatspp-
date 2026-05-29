@@ -80,8 +80,21 @@ async function testBackground() {
     if (String(url).includes("translate.googleapis.com")) {
       return mockJson([[["google result"]]]);
     }
-    if (String(url).includes("translate.volcengine.com")) {
-      return mockJson({ translation: "volcano result" });
+    if (String(url).includes("edge.microsoft.com/translate/auth")) {
+      return {
+        ok: true,
+        status: 200,
+        async json() {
+          return {};
+        },
+        async text() {
+          return "edge-token";
+        }
+      };
+    }
+    if (String(url).includes("api-edge.cognitive.microsofttranslator.com")) {
+      assert.equal(options.headers.Authorization, "Bearer edge-token");
+      return mockJson([{ translations: [{ text: "microsoft result" }] }]);
     }
     if (String(url).includes(":generateContent")) {
       return mockJson({ candidates: [{ content: { parts: [{ text: "gemini result" }] } }] });
@@ -97,7 +110,7 @@ async function testBackground() {
 
   const { context, local } = loadBackground(fetchImpl, {
     provider: "google",
-    providerEnabled: { google: true, volcano: false, deepseek: false },
+    providerEnabled: { google: true, microsoft: true, deepseek: false },
     providers: {}
   });
 
@@ -109,6 +122,9 @@ async function testBackground() {
   const cached = await context.translateMessage({ text: "Hello", targetLanguage: "zh-CN" });
   assert.equal(cached.cached, true);
   assert.equal(calls.filter((call) => call.url.includes("translate.googleapis.com")).length, 1);
+
+  const microsoft = await context.translateWithMicrosoftEdge("A longer message\nwith another line", "zh-CN", {});
+  assert.equal(microsoft, "microsoft result");
 
   const openai = await context.translateWithOpenAICompatible({
     provider: "custom",
@@ -192,6 +208,9 @@ async function testContentScript() {
           <div class="message-in">
             <span class="selectable-text copyable-text">Hello 12:30</span>
           </div>
+          <div class="message-out">
+            <span class="selectable-text copyable-text">Should not translate</span>
+          </div>
           <footer>
             <div contenteditable="true" role="textbox">source text</div>
           </footer>
@@ -259,8 +278,14 @@ async function testContentScript() {
   assert.equal(document.querySelector(".wa-bubble-translator-output").textContent, "translated bubble");
   assert.equal(document.querySelector(".wa-manual-translate"), null);
   assert.deepEqual(window.__messages.map((messagePayload) => messagePayload.payload.direction), ["receive"]);
+  assert.deepEqual(window.__messages.map((messagePayload) => messagePayload.payload.text), ["Hello"]);
   assert.equal(window.__messages[0].payload.targetLanguage, "zh-CN");
   assert.equal(window.__messages[0].payload.text, "Hello");
+  assert.equal(window.normalizeMessageBody("你发送了这个09:52"), "你发送了这个");
+  assert.equal(window.normalizeMessageBody("再次16:10"), "再次");
+  assert.equal(window.normalizeMessageBody("11:29"), "");
+  assert.equal(window.normalizeMessageBody("Forwarded"), "");
+
   window.close();
 }
 
