@@ -277,8 +277,8 @@ async function testContentScript() {
   await tick();
   assert.equal(document.querySelector(".wa-bubble-translator-output").textContent, "translated bubble");
   assert.equal(document.querySelector(".wa-manual-translate"), null);
-  assert.deepEqual(window.__messages.map((messagePayload) => messagePayload.payload.direction), ["receive"]);
-  assert.deepEqual(window.__messages.map((messagePayload) => messagePayload.payload.text), ["Hello"]);
+  assert.deepEqual(window.__messages.map((messagePayload) => messagePayload.payload.direction), ["receive", "receive"]);
+  assert.deepEqual(window.__messages.map((messagePayload) => messagePayload.payload.text), ["Hello", "Should not translate"]);
   assert.equal(window.__messages[0].payload.targetLanguage, "zh-CN");
   assert.equal(window.__messages[0].payload.text, "Hello");
   assert.equal(window.normalizeMessageBody("你发送了这个09:52"), "你发送了这个");
@@ -289,8 +289,89 @@ async function testContentScript() {
   window.close();
 }
 
+async function testContentLanguageDetectionSwitch() {
+  const window = new Window({ url: "https://web.whatsapp.com/" });
+  const { document } = window;
+  document.write(`
+    <!doctype html>
+    <html>
+      <body>
+        <div id="main">
+          <header><span dir="auto" title="Spain">Spain</span></header>
+          <div class="message-in">
+            <span class="selectable-text copyable-text">Hola cliente</span>
+          </div>
+          <footer>
+            <div contenteditable="true" role="textbox"></div>
+          </footer>
+        </div>
+      </body>
+    </html>
+  `);
+  document.close();
+
+  const savedSettings = [];
+  window.structuredClone = structuredClone;
+  window.chrome = {
+    storage: {
+      sync: {
+        async get() {
+          return {
+            settings: {
+              enabled: true,
+              receiveLanguage: "zh-CN",
+              sendLanguage: "en",
+              autoReceive: false,
+              autoSend: false,
+              autoDetectLanguage: true,
+              sendTrigger: "enter",
+              translationColor: "#a127b8",
+              translationSize: "default"
+            }
+          };
+        },
+        async set(values) {
+          savedSettings.push(values.settings);
+        }
+      },
+      onChanged: { addListener() {} }
+    },
+    runtime: {
+      async sendMessage() {
+        return { ok: true, text: "translated bubble" };
+      }
+    },
+    i18n: {
+      async detectLanguage(text) {
+        if (text.includes("Bonjour")) {
+          return { languages: [{ language: "fr", percentage: 99 }] };
+        }
+        return { languages: [{ language: "es", percentage: 99 }] };
+      }
+    }
+  };
+
+  window.eval(fs.readFileSync(path.join(rootDir, "content.js"), "utf8"));
+  await tick();
+  await window.updateDetectedLanguage();
+  assert.equal(document.querySelector(".wa-language-select").value, "es");
+  assert.equal(savedSettings.length, 0);
+
+  document.querySelector("header span").textContent = "France";
+  document.querySelector("header span").setAttribute("title", "France");
+  document.querySelector(".message-in .selectable-text").textContent = "Bonjour client";
+  window.dispatchEvent(new window.Event("hashchange"));
+  await tick();
+  await window.updateDetectedLanguage();
+  await window.updateDetectedLanguage();
+
+  assert.equal(document.querySelector(".wa-language-select").value, "fr");
+  window.close();
+}
+
 await testBackground();
 await testPopup();
 await testContentScript();
+await testContentLanguageDetectionSwitch();
 console.log("All extension tests passed.");
 process.exit(0);

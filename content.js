@@ -79,7 +79,11 @@ const state = {
   lastDraftSource: "",
   isReplacingDraft: false,
   isDetectingLanguage: false,
-  translatingContainers: new WeakSet()
+  translatingContainers: new WeakSet(),
+  lastConversationId: "",
+  lastLanguageDetectionSignature: "",
+  detectedLanguagesByConversation: new Map(),
+  manualLanguagesByConversation: new Map()
 };
 
 init();
@@ -97,6 +101,7 @@ async function init() {
   scanPage();
   installObserver();
   setInterval(scanPage, 1500);
+  watchConversationSwitch();
 }
 
 async function loadSettings() {
@@ -134,6 +139,46 @@ function installObserver() {
 function scheduleScan() {
   clearTimeout(state.scanTimer);
   state.scanTimer = setTimeout(scanPage, 250);
+}
+
+// 获取当前对话标题，用多个 selector 兜底
+function getConversationTitle() {
+  const selectors = [
+    "#main header [data-testid='conversation-info-header-chat-title'] span",
+    "#main header ._ao3e",
+    "#main header span[dir='auto'][title]",
+    "#main header span[dir='auto']",
+    "#main header div[role='button'] span[dir='auto']"
+  ];
+  for (const sel of selectors) {
+    const text = document.querySelector(sel)?.textContent?.trim();
+    if (text) return text;
+  }
+  // 最后兜底：URL + hash（部分版本切换对话会改 hash）
+  return window.location.href + window.location.hash;
+}
+
+// 对话切换检测：独立 interval + URL 事件双保险
+function watchConversationSwitch() {
+  const check = () => {
+    const currentId = getConversationTitle();
+    if (!currentId || currentId === state.lastConversationId) return;
+    switchConversation(currentId);
+  };
+  check();
+  setInterval(check, 600);
+  window.addEventListener("hashchange", check);
+  window.addEventListener("popstate", check);
+}
+
+function switchConversation(conversationId) {
+  state.lastConversationId = conversationId;
+  state.manualLanguage = state.manualLanguagesByConversation.get(conversationId) || "";
+  state.detectedLanguage = state.detectedLanguagesByConversation.get(conversationId) || "";
+  state.lastLanguageDetectionSignature = "";
+  clearTimeout(state.detectTimer);
+  scheduleLanguageDetection();
+  updateLanguagePrompt();
 }
 
 function scanPage() {
@@ -192,7 +237,7 @@ function shouldAutoTranslateMessage(messageNode, textContainer) {
   if (isIncoming && !state.settings.autoReceive) {
     return false;
   }
-  if (textContainer.querySelector(":scope > .wa-bubble-translator-output")) {
+  if (textContainer.querySelector(".wa-bubble-translator-output")) {
     return false;
   }
   if (state.translatingContainers.has(textContainer)) {
@@ -353,6 +398,9 @@ function installLanguagePrompt(footer) {
   }
   select.addEventListener("change", async () => {
     state.manualLanguage = select.value;
+    if (state.lastConversationId) {
+      state.manualLanguagesByConversation.set(state.lastConversationId, select.value);
+    }
     state.settings.sendLanguage = select.value;
     await saveSettings({ sendLanguage: select.value });
     updateLanguagePrompt();
@@ -508,16 +556,20 @@ async function updateDetectedLanguage() {
     return;
   }
 
-  const incomingText = [...document.querySelectorAll(".message-in")]
-    .slice(-8)
-    .map((node) => {
-      const container = findTextContainer(node);
-      return container ? extractMessageText(container) : "";
-    })
-    .filter(Boolean)
-    .join(" ");
+  const conversationId = getConversationTitle();
+  if (conversationId && conversationId !== state.lastConversationId) {
+    switchConversation(conversationId);
+    return;
+  }
+
+  const incomingText = getIncomingLanguageSample();
 
   if (incomingText.length < 3) {
+    return;
+  }
+
+  const signature = `${state.lastConversationId || "unknown"}:${incomingText.slice(-1000)}`;
+  if (signature === state.lastLanguageDetectionSignature) {
     return;
   }
 
@@ -528,14 +580,25 @@ async function updateDetectedLanguage() {
     const detected = DETECT_MAP[first?.language];
     if (detected && first.percentage >= 35 && detected !== state.detectedLanguage) {
       state.detectedLanguage = detected;
-      state.settings.sendLanguage = detected;
-      await saveSettings({ sendLanguage: detected });
+      if (state.lastConversationId) {
+        state.detectedLanguagesByConversation.set(state.lastConversationId, detected);
+      }
+      updateLanguagePrompt();
     }
+    state.lastLanguageDetectionSignature = signature;
   } catch (error) {
     console.warn("[WhatsApp Translator] language detection failed", error);
   } finally {
     state.isDetectingLanguage = false;
   }
+}
+
+function getIncomingLanguageSample() {
+  return [...document.querySelectorAll(".message-in")]
+    .slice(-8)
+    .flatMap((node) => findAllTextContainers(node).map(extractMessageText))
+    .filter(Boolean)
+    .join(" ");
 }
 
 function getActiveSendLanguage() {
