@@ -286,6 +286,55 @@ async function testContentScript() {
   assert.equal(window.normalizeMessageBody("11:29"), "");
   assert.equal(window.normalizeMessageBody("Forwarded"), "");
 
+  const input = document.querySelector("[role='textbox']");
+  let sameTargetSendCount = 0;
+  input.textContent = "需要翻译";
+  input.innerText = "需要翻译";
+  input.addEventListener("keydown", () => {
+    sameTargetSendCount += 1;
+  });
+
+  const beforeSendCount = window.__messages.length;
+  const firstEnter = new window.KeyboardEvent("keydown", { key: "Enter", bubbles: true, cancelable: true });
+  const secondEnter = new window.KeyboardEvent("keydown", { key: "Enter", bubbles: true, cancelable: true });
+  input.dispatchEvent(firstEnter);
+  input.dispatchEvent(secondEnter);
+  await tick();
+
+  assert.equal(sameTargetSendCount, 0);
+  assert.equal(firstEnter.defaultPrevented, true);
+  assert.equal(secondEnter.defaultPrevented, true);
+  assert.equal(window.__messages.length, beforeSendCount + 1);
+  assert.equal(window.__messages.at(-1).payload.direction, "send");
+
+  await new Promise((resolve) => setTimeout(resolve, 350));
+
+  await window.saveSettings({ sendLanguage: "es" });
+  window.updateLanguagePrompt();
+  await tick();
+
+  input.textContent = "Hello customer";
+  input.innerText = "Hello customer";
+  input.dispatchEvent(new window.InputEvent("input", { bubbles: true, inputType: "insertText", data: "Hello customer" }));
+
+  const beforeSpanishSendCount = window.__messages.length;
+  const englishEnter = new window.KeyboardEvent("keydown", { key: "Enter", bubbles: true, cancelable: true });
+  input.dispatchEvent(englishEnter);
+  await tick();
+
+  assert.equal(englishEnter.defaultPrevented, true);
+  assert.equal(window.__messages.length, beforeSpanishSendCount + 1);
+  assert.equal(window.__messages.at(-1).payload.direction, "send");
+  assert.equal(window.__messages.at(-1).payload.text, "Hello customer");
+  assert.equal(window.__messages.at(-1).payload.targetLanguage, "es");
+
+  await new Promise((resolve) => setTimeout(resolve, 350));
+
+  const translatedSpanishEnter = new window.KeyboardEvent("keydown", { key: "Enter", bubbles: true, cancelable: true });
+  input.dispatchEvent(translatedSpanishEnter);
+  assert.equal(translatedSpanishEnter.defaultPrevented, false);
+  assert.equal(sameTargetSendCount, 1);
+
   window.close();
 }
 

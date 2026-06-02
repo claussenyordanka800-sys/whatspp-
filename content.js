@@ -77,7 +77,9 @@ const state = {
   detectedLanguage: "",
   manualLanguage: "",
   lastDraftSource: "",
+  lastTranslatedDraft: null,
   isReplacingDraft: false,
+  isTranslatingDraft: false,
   isDetectingLanguage: false,
   translatingContainers: new WeakSet(),
   lastConversationId: "",
@@ -431,6 +433,10 @@ function installDraftWatcher(input) {
   }
   input.dataset.waTranslatorDraftReady = "1";
   input.addEventListener("input", () => {
+    const text = normalizeText(input.innerText || input.textContent || "");
+    if (!state.isReplacingDraft && !isTranslatedDraft(text, getActiveSendLanguage())) {
+      state.lastTranslatedDraft = null;
+    }
     if (!state.settings.enabled || !state.settings.autoSend || state.settings.sendTrigger !== "typing" || state.isReplacingDraft) {
       return;
     }
@@ -438,7 +444,13 @@ function installDraftWatcher(input) {
     state.draftTimer = setTimeout(() => autoTranslateDraft(input), 900);
   });
   input.addEventListener("keydown", (event) => {
-    if (!state.settings.enabled || event.key !== "Enter" || event.shiftKey || event.altKey || event.ctrlKey || event.metaKey || state.isReplacingDraft) {
+    if (!state.settings.enabled || event.key !== "Enter" || event.shiftKey || event.altKey || event.ctrlKey || event.metaKey) {
+      return;
+    }
+
+    if (state.isReplacingDraft || state.isTranslatingDraft) {
+      event.preventDefault();
+      event.stopImmediatePropagation();
       return;
     }
 
@@ -447,16 +459,16 @@ function installDraftWatcher(input) {
       return;
     }
 
-    if (containsChinese(text) && state.settings.sendTrigger === "enter") {
+    if (state.settings.sendTrigger === "enter" && shouldTranslateDraftText(text)) {
       event.preventDefault();
-      event.stopPropagation();
+      event.stopImmediatePropagation();
       translateComposer(true);
       return;
     }
 
     if (containsChinese(text) && state.settings.forbidChinese) {
       event.preventDefault();
-      event.stopPropagation();
+      event.stopImmediatePropagation();
       showComposerNotice("\u8bf7\u5148\u7ffb\u8bd1\uff0c\u5df2\u963b\u6b62\u4e2d\u6587\u53d1\u9001");
     }
   }, true);
@@ -464,7 +476,7 @@ function installDraftWatcher(input) {
 
 async function autoTranslateDraft(input) {
   const text = normalizeText(input.innerText || input.textContent || "");
-  if (!text || text === state.lastDraftSource || !containsChinese(text)) {
+  if (!text || text === state.lastDraftSource || !shouldTranslateDraftText(text) || state.isTranslatingDraft) {
     return;
   }
 
@@ -483,6 +495,13 @@ function findInput() {
 }
 
 async function translateComposer(showNotice) {
+  if (state.isTranslatingDraft) {
+    if (showNotice) {
+      showComposerNotice("\u6b63\u5728\u7ffb\u8bd1\uff0c\u8bf7\u7a0d\u5019");
+    }
+    return;
+  }
+
   const input = findInput();
   const text = normalizeText(input?.innerText || input?.textContent || "");
   if (!input || !text) {
@@ -493,6 +512,7 @@ async function translateComposer(showNotice) {
   }
 
   let resultLabel = "";
+  state.isTranslatingDraft = true;
   setComposerBusy(true);
 
   try {
@@ -510,11 +530,16 @@ async function translateComposer(showNotice) {
     }
 
     await replaceComposerText(input, response.text);
+    state.lastTranslatedDraft = {
+      text: normalizeText(response.text),
+      targetLanguage: getActiveSendLanguage()
+    };
     resultLabel = "\u5df2\u7ffb\u8bd1\uff0c\u518d\u6309 Enter \u53d1\u9001";
   } catch (error) {
     resultLabel = "\u7ffb\u8bd1\u5931\u8d25";
     console.warn("[WhatsApp Translator]", error);
   } finally {
+    state.isTranslatingDraft = false;
     setComposerBusy(false);
     if (showNotice || resultLabel === "\u7ffb\u8bd1\u5931\u8d25") {
       showComposerNotice(resultLabel);
@@ -605,6 +630,25 @@ function getActiveSendLanguage() {
   return state.manualLanguage || state.detectedLanguage || state.settings.sendLanguage || "en";
 }
 
+function shouldTranslateDraftText(text) {
+  const targetLanguage = getActiveSendLanguage();
+  if (!text || isTranslatedDraft(text, targetLanguage)) {
+    return false;
+  }
+  if (containsChinese(text)) {
+    return !targetLanguage.startsWith("zh");
+  }
+  return targetLanguage !== "en";
+}
+
+function isTranslatedDraft(text, targetLanguage) {
+  return Boolean(
+    state.lastTranslatedDraft
+      && state.lastTranslatedDraft.targetLanguage === targetLanguage
+      && state.lastTranslatedDraft.text === normalizeText(text)
+  );
+}
+
 function getReceiveLanguage() {
   return state.settings.receiveLanguage || "zh-CN";
 }
@@ -612,6 +656,10 @@ function getReceiveLanguage() {
 async function saveSettings(partial) {
   const stored = await chrome.storage.sync.get("settings");
   const settings = { ...state.settings, ...(stored.settings || {}), ...partial };
+  if (settings.sendTrigger === "manual") {
+    settings.sendTrigger = "enter";
+    settings.autoSend = false;
+  }
   state.settings = settings;
   await chrome.storage.sync.set({ settings });
 }
