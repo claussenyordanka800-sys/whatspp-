@@ -1,6 +1,121 @@
-# WhatsApp Bubble Translator
+# WhatsApp翻译无忧
 
-Chrome MV3 plugin for translating WhatsApp Web messages inside the original chat bubble.
+**WhatsApp Bubble Translator** 是一个 Chrome Manifest V3 扩展：在 WhatsApp 网页版的原有聊天气泡里翻译消息，原文保留。历史英文名是 WhatsApp Bubble Translator。当前版本 **0.3.3**。
+
+本项目与 WhatsApp / Meta 无关。MIT 许可。
+
+[中文](#中文) · [English](#english) · [隐私政策](docs/PRIVACY.md) · [商店文案](docs/chrome-web-store.md)
+
+## 中文
+
+在聊天气泡内翻译收发消息，适合需要跟进外语客户的场景。支持谷歌、微软、DeepSeek、Grok、DeepL、OpenAI、豆包、Gemini，以及任意 OpenAI 兼容接口。另有 AI 回复助手、客户语言、地区时间和常用语。
+
+### 功能摘要
+
+- 译文写在原气泡里，默认紫色，可改颜色和字号
+- 回车先翻译再发送，或输入时翻译；可选翻译完成后直接发送
+- 按客户记住语言；显示地区、货币和当地时间；常用语一键填入
+- 多引擎排序，失败后自动换下一个；可测试接口、拉取模型
+- AI 助手根据最近消息草拟回复，或润色当前草稿；确认后才填入，不自动发送
+
+### 安装
+
+**加载已解压的扩展**
+
+1. 打开 `chrome://extensions/`，开启「开发者模式」
+2. 选择「加载已解压的扩展程序」，选中含 `manifest.json` 的目录
+3. 打开 [WhatsApp 网页版](https://web.whatsapp.com/) 并登录
+4. 点击工具栏上的扩展图标，打开翻译开关
+
+更新代码后，在扩展页重新加载，确认版本为 **0.3.3**，再刷新 WhatsApp 页面。
+
+**Chrome 网上应用店**
+
+尚未上架。上架后把下面的占位链接换成实际地址：
+
+`https://chromewebstore.google.com/detail/TODO-whatsapp-bubble-translator`
+
+商店用的名称、短说明、权限理由和截图图注在 [docs/chrome-web-store.md](docs/chrome-web-store.md)。
+
+**打商店压缩包**
+
+```bash
+npm run pack
+```
+
+需要系统已安装 `zip`。输出在 `dist/whatsapp-bubble-translator-0.3.3-chrome-web-store.zip`，不含测试、文档、预览图和 `node_modules`。
+
+### 截图
+
+| 弹窗 | 引擎设置 |
+| --- | --- |
+| ![扩展弹窗：翻译开关、引擎、收发语言和译文样式](popup-preview.png) | ![引擎设置：排序、密钥、接口地址和模型](engine-settings-0.3.1.png) |
+
+| 气泡翻译与客户工具 | AI 助手 |
+| --- | --- |
+| ![气泡内双语译文，以及地区、常用语和 AI 助手入口](chat-tools-preview.png) | ![AI 回复助手：预览后才填入草稿](ai-assistant-0.3.1.png) |
+
+开发用的失败重试预览（模拟页面，不是商店截图）：[tests/error-recovery-0.3.2.png](tests/error-recovery-0.3.2.png)。
+
+### 隐私
+
+待译文本会发送到你启用的翻译服务。谷歌翻译和微软翻译默认开启；谷歌直连失败时，同一段文本可能同时发给 MyMemory。AI 建议回复会带上最近最多 8 条文字消息。
+
+作者没有服务器，不在自己的服务器上保存聊天记录，也不出售数据。密钥、译文缓存、客户语言和常用语只在浏览器扩展存储里；诊断日志不记录原文和密钥。若开启 Chrome 同步，`chrome.storage.sync` 里的设置（含密钥）可能同步到你的 Google 账号。
+
+完整说明：[docs/PRIVACY.md](docs/PRIVACY.md)。不要把真实 API 密钥提交进仓库。
+
+### 贡献与测试
+
+```bash
+npm ci
+npm test
+```
+
+`npm test` 运行扩展回归、输入场景、草稿生命周期、引擎请求和诊断日志测试。欢迎用 Pull Request 提交改进。改动请保持现有行为，并补上对应测试。`tests/preview.html` 是本地模拟页面，不连接真实 WhatsApp。
+
+### 许可
+
+[MIT License](LICENSE)。Copyright (c) 2026 claussenyordanka800-sys and contributors.
+
+## English
+
+WhatsApp Bubble Translator is a Chrome MV3 extension. It translates WhatsApp Web messages inside the original chat bubble and leaves the source text in place. The in-product name is WhatsApp翻译无忧. Version 0.3.3. It is not affiliated with WhatsApp or Meta.
+
+### Features
+
+- In-bubble translation, with color and type size controls
+- Enter to translate, Enter again to send; translate-while-typing; optional send-after-translate
+- Per-contact language, region, currency, local time, and quick phrases
+- Ordered engines: Google, Microsoft, DeepSeek, Grok, DeepL, OpenAI, Doubao, Gemini, and any OpenAI-compatible URL
+- AI reply suggestions and draft polishing. You insert the result; it is not sent for you
+
+### Install
+
+Load the unpacked folder that contains `manifest.json` from `chrome://extensions` (Developer mode), then open [WhatsApp Web](https://web.whatsapp.com/).
+
+Chrome Web Store listing is not live yet. Placeholder:
+
+`https://chromewebstore.google.com/detail/TODO-whatsapp-bubble-translator`
+
+`npm run pack` builds `dist/whatsapp-bubble-translator-0.3.3-chrome-web-store.zip` (requires `zip`). Screenshots are in the Chinese section above. Store copy, permission justifications, and captions: [docs/chrome-web-store.md](docs/chrome-web-store.md).
+
+### Privacy
+
+Translation text is sent to the providers you enable. Google and Microsoft are on by default; a failed Google request may also reach MyMemory. No chat data is stored on our servers, and we do not sell data. API keys stay in extension storage and can sync with Chrome if sync is on. Details: [docs/PRIVACY.md](docs/PRIVACY.md). Do not commit real API keys.
+
+### Contributing and tests
+
+```bash
+npm ci
+npm test
+```
+
+Issues and pull requests are welcome. The license is [MIT](LICENSE).
+
+## 详细说明与更新记录
+
+下面保留功能细节和各版本的改动记录。
 
 ## 使用
 
