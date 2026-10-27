@@ -1,11 +1,22 @@
 {
   "manifest_version": 3,
   "name": "WhatsApp翻译无忧",
-  "description": "Translate WhatsApp Web messages inside chat bubbles with Google, DeepSeek, or OpenAI-compatible APIs.",
+  "description": "在 WhatsApp 网页版气泡内翻译消息。支持谷歌、微软、DeepSeek、Grok、DeepL 及 OpenAI 兼容接口。",
   "version": "0.3.3",
+  "icons": {
+    "16": "assets/icons/icon16.png",
+    "32": "assets/icons/icon32.png",
+    "48": "assets/icons/icon48.png",
+    "128": "assets/icons/icon128.png"
+  },
   "action": {
     "default_popup": "popup.html",
-    "default_title": "WhatsApp翻译无忧"
+    "default_title": "WhatsApp翻译无忧",
+    "default_icon": {
+      "16": "assets/icons/icon16.png",
+      "32": "assets/icons/icon32.png",
+      "48": "assets/icons/icon48.png"
+    }
   },
   "background": {
     "service_worker": "background.js"

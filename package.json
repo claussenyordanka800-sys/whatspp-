@@ -1,10 +1,22 @@
 {
   "name": "whatsapp-bubble-translator",
   "version": "0.3.3",
-  "private": true,
+  "description": "Chrome MV3 extension that translates WhatsApp Web messages inside chat bubbles. 在 WhatsApp 网页版聊天气泡内翻译消息。",
+  "license": "MIT",
+  "private": false,
   "type": "module",
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/claussenyordanka800-sys/whatspp-.git"
+  },
+  "homepage": "https://github.com/claussenyordanka800-sys/whatspp-#readme",
+  "bugs": {
+    "url": "https://github.com/claussenyordanka800-sys/whatspp-/issues"
+  },
   "scripts": {
-    "test": "node tests/extension.test.mjs && node tests/chat-tools.test.mjs && node tests/input-scenarios.test.mjs && node tests/composer-lifecycle.test.mjs && node tests/provider-lifecycle.test.mjs && node tests/diagnostics.test.mjs"
+    "test": "node tests/extension.test.mjs && node tests/chat-tools.test.mjs && node tests/input-scenarios.test.mjs && node tests/composer-lifecycle.test.mjs && node tests/provider-lifecycle.test.mjs && node tests/diagnostics.test.mjs",
+    "pack": "node scripts/pack-store.mjs",
+    "icons": "python3 scripts/render-icons.py"
   },
   "devDependencies": {
     "happy-dom": "^20.9.0"
