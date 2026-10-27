@@ -1,0 +1,28 @@
+<!doctype html>
+<html lang="zh-CN"><meta charset="utf-8"><title>聊天工具预览 · 模拟数据</title>
+<link rel="stylesheet" href="../content.css">
+<style>
+body { margin:0; background:#dce5e1; font:14px 'Segoe UI','Microsoft YaHei',sans-serif; color:#162e27; }
+aside { padding:20px 28px; background:#0c5142; color:white; display:flex; justify-content:space-between; }
+#main { max-width:940px; margin:28px auto; box-shadow:0 8px 40px #142f231a; }
+header { background:#fff; padding:18px 24px; border-bottom:1px solid #dce5e1; }
+header small { display:block; color:#6b7e77; margin-top:5px; }
+.messages { padding:24px; background:#efeae2; min-height:180px; }
+.message-in,.message-out { border-radius:9px; padding:12px 16px; max-width:65%; margin:10px 0; background:#fff; }
+.message-out { background:#d9fdd3; margin-left:auto; }
+footer { background:#f0f2f5; }
+.compose { display:flex; align-items:center; gap:12px; padding:14px; }
+[contenteditable] { background:white; padding:14px; border-radius:8px; flex:1; min-height:20px; outline-color:#00a884; }
+.compose button { border:0; border-radius:50%; background:#008a68; color:white; width:42px; height:42px; }
+</style>
+<aside><strong>WhatsApp 翻译无忧</strong><span>交互预览 · 模拟消息与翻译接口</span></aside>
+<div id="main"><header><span dir="auto" title="Anna · Berlin">Anna · Berlin</span><small>客户语言独立记忆 · 消息双向翻译</small></header>
+<div class="messages"><div class="message-in" data-id="false_491234567890@c.us_A"><span class="selectable-text copyable-text">Guten Tag! Können Sie mir ein Angebot für 500 Stück schicken?</span></div>
+<div class="message-out" data-id="true_491234567890@c.us_B"><span class="selectable-text copyable-text">Gerne! Ich bereite das Angebot für Sie vor.</span></div></div>
+<footer><div class="compose"><div contenteditable="true" role="textbox" aria-label="输入消息"></div><button data-testid="compose-btn-send" aria-label="模拟发送"><span data-icon="send">➤</span></button></div></footer></div>
+<script>
+const listeners = [];
+const makeArea = (store, name) => ({ async get(key) { return key ? {[key]:store[key]} : {...store}; }, async set(values) { Object.assign(store,values); listeners.forEach(fn=>fn(Object.fromEntries(Object.entries(values).map(([key,newValue])=>[key,{newValue}])),name)); } });
+window.chrome = {storage:{sync:makeArea({settings:{enabled:true,autoReceive:true,autoDetectLanguage:true,sendLanguage:'en',receiveLanguage:'zh-CN'}},'sync'),local:makeArea({'contact:491234567890@c.us':{language:'de'}},'local'),onChanged:{addListener(fn){listeners.push(fn);}}},runtime:{async sendMessage({type,payload}) { if (type === 'diagLog' || type === 'diagClear') return {ok:true}; if (type === 'aiAssist') return {ok:true,text:'Vielen Dank! Welche Produktspezifikation benötigen Sie?',providerName:'演示 AI'}; return {ok:true,text:payload.direction==='send'?'Vielen Dank für Ihre Nachricht.':payload.text.startsWith('Guten')?'您好！可以给我一份 500 件产品的报价吗？':'没问题！我正在为您准备报价。'}; }},i18n:{async detectLanguage(){return {languages:[{language:'de',percentage:99}]};}}};
+</script><script src="../chat-tools.js"></script><script src="../diagnostics.js"></script><script>globalThis.WbtDiag?.installWriter?.();</script><script src="../content.js"></script>
+</html>

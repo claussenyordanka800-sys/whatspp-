@@ -1,0 +1,6 @@
+<svg role="img" viewBox="0 0 64 64" xmlns="http://www.w3.org/2000/svg">
+  <title>Grok</title>
+  <circle cx="32" cy="32" r="30" fill="#111827"/>
+  <path d="M18 17h8.6l10.1 13.3L47 17h4L38.8 34.4 51 47h-8.6L32.6 35.6 22 47h-4l11.5-16.1L18 17Z" fill="#fff"/>
+  <path d="M39.5 37.5 47 47h-4.6l-5.2-6.6 2.3-2.9Z" fill="#9ca3af"/>
+</svg>

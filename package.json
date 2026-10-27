@@ -1,10 +1,10 @@
 {
   "name": "whatsapp-bubble-translator",
-  "version": "0.1.0",
+  "version": "0.3.3",
   "private": true,
   "type": "module",
   "scripts": {
-    "test": "node tests/extension.test.mjs"
+    "test": "node tests/extension.test.mjs && node tests/chat-tools.test.mjs && node tests/input-scenarios.test.mjs && node tests/composer-lifecycle.test.mjs && node tests/provider-lifecycle.test.mjs && node tests/diagnostics.test.mjs"
   },
   "devDependencies": {
     "happy-dom": "^20.9.0"

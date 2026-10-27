@@ -2,7 +2,7 @@
   "manifest_version": 3,
   "name": "WhatsApp翻译无忧",
   "description": "Translate WhatsApp Web messages inside chat bubbles with Google, DeepSeek, or OpenAI-compatible APIs.",
-  "version": "0.1.0",
+  "version": "0.3.3",
   "action": {
     "default_popup": "popup.html",
     "default_title": "WhatsApp翻译无忧"
@@ -16,9 +16,12 @@
   "host_permissions": [
     "https://web.whatsapp.com/*",
     "https://translate.googleapis.com/*",
+    "https://translate.google.com/*",
+    "https://api.mymemory.translated.net/*",
     "https://edge.microsoft.com/*",
     "https://api-edge.cognitive.microsofttranslator.com/*",
     "https://api.deepseek.com/*",
+    "https://api.x.ai/*",
     "https://*/*",
     "http://127.0.0.1/*",
     "http://localhost/*"
@@ -29,6 +32,8 @@
         "https://web.whatsapp.com/*"
       ],
       "js": [
+        "diagnostics.js",
+        "chat-tools.js",
         "content.js"
       ],
       "css": [

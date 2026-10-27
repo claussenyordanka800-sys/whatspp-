@@ -34,7 +34,10 @@
         <div class="section-block section-divider">
           <div class="section-head">
             <h2>翻译引擎</h2>
-            <button id="openEngineSettings" class="link-button" type="button">引擎设置</button>
+            <div class="section-head-actions">
+              <button id="openDiagLog" class="link-button" type="button">日志</button>
+              <button id="openEngineSettings" class="link-button" type="button">引擎设置</button>
+            </div>
           </div>
           <div class="provider-picker">
             <span id="providerLogoMain" class="provider-picker-logo" aria-hidden="true"></span>
@@ -75,7 +78,7 @@
             <input name="sendTrigger" type="radio" value="enter">
             <span>
               回车翻译
-              <small>按 Enter 发送翻译</small>
+              <small>首次 Enter 翻译，再次 Enter 发送</small>
             </span>
           </label>
           <label class="radio-row">
@@ -86,6 +89,22 @@
             </span>
           </label>
         </fieldset>
+
+        <section class="section-block section-divider">
+          <label class="switch-row">
+            <input id="sendAfterTranslate" type="checkbox">
+            <span>翻译完成后直接发送</span>
+          </label>
+          <p class="hint">按 Enter 或点击发送时生效；关闭后先填入译文供检查。输入法选词不会触发。</p>
+        </section>
+        <details class="ai-settings">
+          <summary>AI 助手与翻译要求</summary>
+          <p id="aiProviderStatus" role="status"></p>
+          <p class="hint">聊天工具栏中的“AI 助手”支持建议回复和润色。仅使用已启用且配置完整的 AI 引擎；Google、微软和 DeepL 不提供生成能力。</p>
+          <label for="translationPrompt">AI 翻译要求</label>
+          <textarea id="translationPrompt" rows="3" maxlength="1000" placeholder="例如：使用礼貌、简洁的商务语气；保留产品型号和数字。"></textarea>
+          <p class="hint">仅对 AI 引擎生效。客户语言、地区和常用语可在聊天输入框上方设置。</p>
+        </details>
 
         <label class="switch-row section-block section-divider">
           <input id="forbidChinese" type="checkbox">
@@ -134,6 +153,30 @@
       </div>
     </div>
 
+    <div id="diagModal" class="modal" hidden>
+      <div class="modal-panel" role="dialog" aria-modal="true" aria-labelledby="diagTitle">
+        <div class="modal-head">
+          <h2 id="diagTitle">日志 / 诊断</h2>
+          <button id="closeDiagLog" class="icon-btn ghost" type="button" title="关闭">✕</button>
+        </div>
+        <p class="hint">只保留最近约 400 条。不含原文和 API Key。复制全部按时间从早到晚。</p>
+        <div class="diag-toolbar">
+          <label for="diagLevel">级别
+            <select id="diagLevel" aria-label="日志级别">
+              <option value="all">全部</option>
+              <option value="error">错误</option>
+              <option value="warn">警告</option>
+              <option value="info">信息</option>
+            </select>
+          </label>
+          <button id="copyDiagLog" class="plain-button" type="button">复制全部</button>
+          <button id="clearDiagLog" class="plain-button" type="button">清空</button>
+        </div>
+        <p id="diagStatus" class="hint" role="status"></p>
+        <ol id="diagList" class="diag-list"></ol>
+      </div>
+    </div>
+
     <template id="providerTemplate">
       <article class="provider-card">
         <div class="provider-head">
@@ -161,6 +204,8 @@
       </article>
     </template>
 
+    <script src="chat-tools.js"></script>
+    <script src="diagnostics.js"></script>
     <script src="popup.js"></script>
   </body>
 </html>

@@ -1,0 +1,12 @@
+<!doctype html><html lang="zh-CN"><meta charset="utf-8"><title>插件设置预览 · 模拟配置</title>
+<style>body{margin:0;padding:24px;background:#e4ebe8;font:14px 'Segoe UI',sans-serif;color:#31564a}iframe{display:block;width:480px;height:590px;border:0;box-shadow:0 8px 32px #193d3426;margin-top:14px;border-radius:10px}</style>
+<strong>设置弹窗 · 480 × 590 · 模拟配置与接口</strong><iframe title="插件设置"></iframe>
+<script>
+(async () => {
+  const response = await fetch('../popup.html');
+  let html = await response.text();
+  const mock = `window.chrome = {storage:{sync:{async get(){return {settings:{}}},async set(){}},local:{async get(){return {}},async set(){}}},runtime:{async sendMessage(message){return message.type==='listModels'?{ok:true,models:[{id:'example-model'}]}:{ok:true,text:'接口测试通过（模拟）'};}}};`;
+  html = html.replace('<head>', '<head><base href="/">').replace('<script src="chat-tools.js">', '<script>' + mock + '<\/script><script src="chat-tools.js">');
+  document.querySelector('iframe').srcdoc = html;
+})();
+</script></html>

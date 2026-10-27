@@ -20,10 +20,15 @@
   display: none !important;
 }
 
+#translationPrompt { box-sizing: border-box; width: 100%; margin-top: 8px; padding: 10px; border: 1px solid var(--line); border-radius: 6px; resize: vertical; font: inherit; }
+
+html { width: 480px; min-width: 480px; height: 590px; overflow: hidden; }
 body {
   margin: 0;
-  width: 452px;
-  min-height: 640px;
+  width: 480px;
+  height: 590px;
+  min-height: 0;
+  overflow-y: auto;
   overflow-x: hidden;
   background: var(--bg-page);
   color: var(--text-main);
@@ -117,6 +122,12 @@ body {
   align-items: center;
   gap: 12px;
   margin-bottom: 8px;
+}
+
+.section-head-actions {
+  display: flex;
+  align-items: center;
+  gap: 12px;
 }
 
 h2 {
@@ -583,7 +594,9 @@ input[type="color"] {
   font-size: 14px;
   line-height: 1.25;
   font-weight: 700;
-  white-space: normal;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
 }
 
 .provider-title .provider-tag {
@@ -769,26 +782,44 @@ input[type="color"] {
   background: linear-gradient(135deg, var(--brand-600), var(--brand-500));
 }
 
-@media (max-width: 390px) {
-  body {
-    width: 100vw;
-  }
-
-  .app-shell,
-  .modal {
-    padding: 10px;
-  }
-
-  .dual-grid,
-  .style-grid,
-  .model-row {
-    grid-template-columns: 1fr;
-  }
-
-  .app-header h1 {
-    font-size: 18px;
-  }
-}
+/* Pin the extension's intrinsic size; viewport-relative sizing traps popups at their initial width. */
+.app-shell { padding: 12px; }
+.app-header { min-height: 48px; padding: 10px 12px; }
+.header-actions { display: none; }
+.panel-card { padding: 12px; }
+.modal { padding: 10px; }
+body.modal-open { overflow: hidden; }
+.modal-panel { width: 100%; height: 100%; max-height: none; padding: 14px; display: flex; flex-direction: column; overflow: hidden; }
+.modal-head, .modal-actions, .modal-panel > .hint, .diag-toolbar { flex-shrink: 0; }
+.diag-toolbar { display: flex; align-items: center; gap: 8px; flex-wrap: wrap; margin-bottom: 4px; }
+.diag-toolbar label { display: flex; align-items: center; gap: 6px; font-size: 12px; }
+.diag-toolbar select { width: auto; min-width: 88px; }
+.diag-toolbar .plain-button { padding: 6px 10px; border-radius: 8px; font-size: 12px; font-weight: 700; cursor: pointer; }
+.diag-list { list-style: none; margin: 0; padding: 0; overflow: auto; flex: 1; min-height: 0; }
+.diag-item { border-top: 1px solid var(--line); padding: 8px 0; font-size: 12px; }
+.diag-level { font-weight: 700; margin-right: 6px; }
+.diag-item-error .diag-level { color: #b42318; }
+.diag-item-warn .diag-level { color: #b54708; }
+.diag-item-info .diag-level { color: #175cd3; }
+.diag-meta, .diag-empty { color: #667085; }
+.diag-message { margin: 2px 0 0; overflow-wrap: anywhere; }
+.provider-list { flex: 1; min-height: 0; overflow-y: auto; }
+.provider-card { flex-shrink: 0; align-items: stretch; padding: 8px 10px; }
+.provider-head { grid-template-columns: 16px minmax(0, 1fr) auto; gap: 6px; min-height: 40px; }
+.provider-title { align-self: center; }
+.provider-title .provider-tag { white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.provider-actions { grid-column: 3; justify-content: flex-end; gap: 6px; }
+.provider-config { padding-left: 0; }
+.provider-status { overflow-wrap: anywhere; margin: 4px 0 0; min-height: 0; }
+.provider-status:empty { display: none; }
+.icon-btn { width: 28px; height: 28px; flex-shrink: 0; }
+.switch-lg input[type="checkbox"]::before { width: 18px; height: 18px; border-radius: 50%; }
+.ai-settings { margin-top: 12px; border: 1px solid var(--line); border-radius: 8px; padding: 10px; }
+.ai-settings summary { cursor: pointer; font-weight: 700; }
+.ai-settings .hint { margin-bottom: 6px; font-size: 12px; }
+.ai-settings label { margin-top: 10px; }
+#aiProviderStatus { font-size: 12px; color: #55716a; margin: 8px 0; }
+:focus-visible { outline: 2px solid #008a68; outline-offset: 2px; }
 
 .provider-logo-google,
 .provider-logo-deepl {
