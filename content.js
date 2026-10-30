@@ -113,6 +113,7 @@ const state = {
 };
 state.profiles = {};
 state.phrases = globalThis.WAChatTools?.defaultPhrases || [];
+state.images = [];
 state.draftRevision = 0;
 state.composing = false;
 state.bypassSend = false;
@@ -173,6 +174,7 @@ async function init() {
     if (key.startsWith('contact:') && value && typeof value === 'object') state.profiles[key.slice(8)] = value;
   }
   if (Array.isArray(local?.quickPhrases)) state.phrases = local.quickPhrases;
+  if (Array.isArray(local?.quickImages)) state.images = local.quickImages;
   state.settingsListener = (changes, area) => {
     if (!ownsPage()) return;
     if (area === 'local') {
@@ -180,6 +182,7 @@ async function init() {
       for (const [key, change] of Object.entries(changes)) {
         if (key.startsWith('contact:')) state.profiles[key.slice(8)] = change.newValue || {};
         if (key === 'quickPhrases') state.phrases = change.newValue || [];
+        if (key === 'quickImages') state.images = change.newValue || [];
       }
       state.manualLanguage = state.profiles[state.lastConversationId]?.language || '';
       if (previousLanguage !== getActiveSendLanguage()) invalidateDraftTranslation('客户语言已改变，请重新翻译');
@@ -1697,7 +1700,12 @@ function toggleChatPanel(footer, toggle) {
     <div class="wa-phrase-list"></div>
     <form class="wa-phrase-form"><input name="title" maxlength="40" required placeholder="标题" aria-label="常用语标题">
     <textarea name="text" maxlength="2000" required placeholder="常用语内容" aria-label="常用语内容" rows="2"></textarea>
-    <button type="submit">保存常用语</button><span class="wa-phrase-status" role="status"></span></form>`;
+    <button type="submit">保存常用语</button><span class="wa-phrase-status" role="status"></span></form>
+    <div class="wa-phrase-heading"><strong>常用图片</strong><span>点击打开 WhatsApp 发送预览</span></div>
+    <div class="wa-image-list"></div>
+    <form class="wa-image-form"><input name="title" maxlength="40" required placeholder="型号/名称" aria-label="图片名称">
+    <input name="files" type="file" accept="image/*" multiple required aria-label="选择图片">
+    <button type="submit">保存图片</button><span class="wa-image-status" role="status"></span></form>`;
   footer.insertBefore(panel, footer.querySelector('.wa-language-prompt').nextSibling);
   panel.addEventListener('keydown', (event) => { if (event.key === 'Escape') { panel.remove(); toggle.setAttribute('aria-expanded', 'false'); toggle.focus(); } });
   const regionSelect = panel.querySelector('.wa-region');
@@ -1716,7 +1724,7 @@ function toggleChatPanel(footer, toggle) {
   zones.addEventListener('change', async () => { await saveContact({ timeZone: zones.value }); updateContactSummary(); });
   renderZones();
   const status = panel.querySelector('.wa-phrase-status');
-  const form = panel.querySelector('form');
+  const form = panel.querySelector('.wa-phrase-form');
   let editing = null;
   const persist = async (next) => {
     try {
@@ -1785,4 +1793,69 @@ function toggleChatPanel(footer, toggle) {
     if (await persist(next)) { setEditing(null); form.reset(); }
   });
   renderPhrases();
+  const imageStatus = panel.querySelector('.wa-image-status');
+  const imageForm = panel.querySelector('.wa-image-form');
+  const persistImages = async (next) => {
+    try {
+      await chrome.storage.local?.set({ quickImages: next });
+      state.images = next;
+      imageStatus.textContent = '已保存';
+      renderImages();
+      return true;
+    } catch { imageStatus.textContent = '保存失败，请重试'; return false; }
+  };
+  const renderImages = () => {
+    const list = panel.querySelector('.wa-image-list');
+    list.replaceChildren();
+    state.images.forEach((item, index) => {
+      const row = document.createElement('div');
+      const use = document.createElement('button');
+      use.type = 'button';
+      const thumb = document.createElement('img');
+      thumb.src = item.images[0]; thumb.alt = '';
+      use.append(thumb, `${item.title}（${item.images.length} 张）`);
+      use.addEventListener('click', () => pasteQuickImages(item, imageStatus));
+      const remove = document.createElement('button');
+      remove.type = 'button'; remove.textContent = '删除';
+      remove.setAttribute('aria-label', `删除 ${item.title}`);
+      remove.addEventListener('click', () => {
+        if (window.confirm(`删除常用图片「${item.title}」？`)) persistImages(state.images.filter((_, i) => i !== index));
+      });
+      row.append(use, remove); list.append(row);
+    });
+    if (!list.children.length) list.textContent = '还没有常用图片，在下方添加';
+  };
+  imageForm.addEventListener('submit', async (event) => {
+    event.preventDefault();
+    const title = imageForm.elements.title.value.trim();
+    const files = [...imageForm.elements.files.files].filter(file => file.type.startsWith('image/'));
+    if (!title || !files.length) return;
+    const images = await Promise.all(files.map(readFileAsDataURL));
+    if (await persistImages([...state.images, { title, images }])) imageForm.reset();
+  });
+  renderImages();
+}
+
+function readFileAsDataURL(file) {
+  return new Promise((resolve, reject) => {
+    const reader = new FileReader();
+    reader.onload = () => resolve(reader.result);
+    reader.onerror = () => reject(reader.error);
+    reader.readAsDataURL(file);
+  });
+}
+
+// Paste the files into the composer so WhatsApp opens its own media preview; the user still confirms the send.
+function pasteQuickImages(item, status) {
+  const input = findInput();
+  if (!input) { status.textContent = '请先打开一个聊天'; return; }
+  const data = new DataTransfer();
+  item.images.forEach((url, index) => {
+    const [head, body] = url.split(',');
+    const type = head.slice(5, head.indexOf(';'));
+    const bytes = Uint8Array.from(atob(body), char => char.charCodeAt(0));
+    data.items.add(new File([bytes], `${item.title}-${index + 1}.${type.split('/')[1] || 'jpg'}`, { type }));
+  });
+  input.focus();
+  input.dispatchEvent(new ClipboardEvent('paste', { bubbles: true, cancelable: true, clipboardData: data }));
 }

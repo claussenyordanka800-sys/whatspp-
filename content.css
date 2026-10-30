@@ -56,6 +56,13 @@
 .wa-phrase-form textarea { resize: vertical; }
 .wa-phrase-form button { background: #008a68; color: white; }
 .wa-phrase-status { align-self: center; }
+.wa-image-list { margin: 8px 0; display: grid; gap: 5px; }
+.wa-image-list > div { display: flex; gap: 5px; }
+.wa-image-list > div > button:first-child { flex: 1; display: flex; align-items: center; gap: 8px; text-align: left; color: #008a68; overflow-wrap: anywhere; }
+.wa-image-list img { width: 36px; height: 36px; object-fit: cover; border-radius: 4px; flex: none; }
+.wa-image-form { display: grid; grid-template-columns: minmax(80px, 1fr) minmax(140px, 3fr); gap: 6px; }
+.wa-image-form button { background: #008a68; color: white; }
+.wa-image-status { align-self: center; }
 
 .wa-language-prompt { gap: 6px; font-size: 12px; }
 .wa-language-prompt-label { font-weight: 500; }

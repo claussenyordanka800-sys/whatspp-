@@ -87,6 +87,23 @@ f.window.confirm = () => true;
 f.window.document.querySelector('.wa-phrase-list button[aria-label^="删除"]').click();
 await tick();
 assert.equal(local.store.quickPhrases.length, 5);
+// Quick images are saved locally and pasted as files so WhatsApp opens its own media preview.
+const imageForm = f.window.document.querySelector('.wa-image-form');
+imageForm.elements.title.value = 'Model A';
+Object.defineProperty(imageForm.elements.files, 'files', { value: [new f.window.File(['png-bytes'], 'a.png', { type: 'image/png' })] });
+imageForm.dispatchEvent(new f.window.Event('submit', { bubbles: true, cancelable: true }));
+await tick();
+assert.equal(local.store.quickImages[0].title, 'Model A');
+assert.match(local.store.quickImages[0].images[0], /^data:image\/png;base64,/);
+let pasted;
+f.input.addEventListener('paste', event => { pasted = event.clipboardData.files; });
+f.window.document.querySelector('.wa-image-list button').click();
+assert.equal(pasted.length, 1);
+assert.equal(pasted[0].type, 'image/png');
+assert.equal(await pasted[0].text(), 'png-bytes');
+f.window.document.querySelector('.wa-image-list button[aria-label^="删除"]').click();
+await tick();
+assert.equal(local.store.quickImages.length, 0);
 f.window.close();
 
 // A late response must not overwrite a newly edited draft or another chat.
