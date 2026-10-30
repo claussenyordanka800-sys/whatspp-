@@ -60,6 +60,33 @@ assert.equal(f.window.document.querySelector('.wa-phrase-list').children.length,
 f.window.document.querySelector('.wa-phrase-list button').click();
 await tick();
 assert.equal(f.input.textContent, 'Custom phrase');
+// A non-empty draft gets the phrase appended instead of a silent refusal.
+f.window.document.querySelector('.wa-phrase-list button').click();
+await tick();
+assert.equal(f.input.textContent, 'Custom phrase Custom phrase');
+// Edit mode is visible and cancellable; cancelling means the next save adds instead of overwriting.
+search.value = ''; search.dispatchEvent(new f.window.Event('input'));
+f.window.document.querySelector('.wa-phrase-list button[aria-label^="编辑"]').click();
+const submitButton = form.querySelector('button[type="submit"]');
+assert.equal(submitButton.textContent, '更新常用语');
+const cancelEdit = [...form.querySelectorAll('button')].find(button => button.textContent === '取消编辑');
+assert.equal(cancelEdit.hidden, false);
+cancelEdit.click();
+assert.equal(submitButton.textContent, '保存常用语');
+form.elements.title.value = 'New'; form.elements.text.value = 'New phrase';
+form.dispatchEvent(new f.window.Event('submit', { bubbles: true, cancelable: true }));
+await tick();
+assert.equal(local.store.quickPhrases.length, 6);
+assert.equal(local.store.quickPhrases[0].title, '欢迎咨询');
+// Delete asks first; declining keeps the phrase.
+f.window.confirm = () => false;
+f.window.document.querySelector('.wa-phrase-list button[aria-label^="删除"]').click();
+await tick();
+assert.equal(local.store.quickPhrases.length, 6);
+f.window.confirm = () => true;
+f.window.document.querySelector('.wa-phrase-list button[aria-label^="删除"]').click();
+await tick();
+assert.equal(local.store.quickPhrases.length, 5);
 f.window.close();
 
 // A late response must not overwrite a newly edited draft or another chat.

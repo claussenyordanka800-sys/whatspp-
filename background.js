@@ -11,7 +11,7 @@ const DEFAULT_PROVIDER_ORDER = ["google", "microsoft", "deepseek", "grok", "deep
 const LEGACY_PROVIDER_ORDER = ["volcano", "deepl", "openai", "deepseek", "doubao", "gemini", "custom", "google"];
 const REMOVED_PROVIDERS = new Set(["volcano"]);
 const DEEPSEEK_FALLBACK_MODELS = [
-  { id: "deepseek-v4-flash", name: "deepseek-v4-flash" },
+  { id: "deepseek-flash", name: "deepseek-flash" },
   { id: "deepseek-v4-pro", name: "deepseek-v4-pro" }
 ];
 // MyMemory reports quota/language problems as "translatedText"; these must never reach a bubble or the cache.
@@ -54,7 +54,7 @@ const DEFAULT_SETTINGS = {
       authUrl: "https://edge.microsoft.com/translate/auth",
       baseUrl: "https://api-edge.cognitive.microsofttranslator.com/translate"
     },
-    deepseek: { apiKey: "", baseUrl: "https://api.deepseek.com", model: "deepseek-v4-flash", models: DEEPSEEK_FALLBACK_MODELS },
+    deepseek: { apiKey: "", baseUrl: "https://api.deepseek.com", model: "deepseek-flash", models: DEEPSEEK_FALLBACK_MODELS },
     grok: { apiKey: "", baseUrl: "https://api.x.ai/v1", model: "grok-4.5" },
     deepl: { apiKey: "", baseUrl: "https://api-free.deepl.com/v2", model: "translate" },
     openai: { apiKey: "", baseUrl: "https://api.openai.com/v1", model: "" },
@@ -836,6 +836,8 @@ async function translateWithOpenAICompatible(options) {
     body: JSON.stringify({
       model,
       temperature: 0,
+      // DeepSeek thinks by default, which is too slow for chat and ignores temperature.
+      ...(options.provider === "deepseek" ? { thinking: { type: "disabled" } } : {}),
       messages: [
         {
           role: "system",

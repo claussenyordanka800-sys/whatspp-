@@ -269,7 +269,7 @@ async function testBackground() {
   const migrated = context.migrateSettings({ providerOrder: ["google"], providerEnabled: { google: true } });
   assert.equal(migrated.providerOrder[0], "google");
   assert.equal(migrated.providers.deepseek.baseUrl, "https://api.deepseek.com");
-  assert.equal(migrated.providers.deepseek.model, "deepseek-v4-flash");
+  assert.equal(migrated.providers.deepseek.model, "deepseek-flash");
   const legacyMigrated = context.migrateSettings({ providers: { deepseek: { model: "deepseek-chat" } } });
   assert.equal(legacyMigrated.providers.deepseek.model, "deepseek-chat");
   assert.match(context.buildHttpErrorFromDetail("DeepSeek 请求失败", 401, "Authentication Fails", "deepseek").message, /认证失败/);
@@ -913,6 +913,15 @@ async function testAIAssistant() {
   assert.match(calls[0].body.messages[1].content, /Keep SKU/);
   assert.doesNotMatch(calls[0].body.messages[0].content, /translation engine/);
   await assert.rejects(context.generateAssistantReply({ action: 'polish', draft: '' }), /润色/);
+  assert.equal(calls[0].body.thinking, undefined, 'only DeepSeek gets the thinking switch');
+  const deepseekCalls = [];
+  const { context: deepseek } = loadBackground(async (url, options) => {
+    deepseekCalls.push({ url, body: JSON.parse(options.body) });
+    return mockJson({ choices: [{ message: { content: 'AI suggestion' } }] });
+  }, { provider: 'deepseek', providerEnabled: { deepseek: true }, providers: { deepseek: { apiKey: 'fixture-key' } } });
+  await deepseek.generateAssistantReply({ action: 'polish', draft: 'Hi' });
+  assert.equal(deepseekCalls[0].body.model, 'deepseek-flash');
+  assert.deepEqual(deepseekCalls[0].body.thinking, { type: 'disabled' }, 'DeepSeek thinking mode is too slow for chat');
   const { context: missing } = loadBackground(() => { throw new Error('Must not call machine translation'); });
   await assert.rejects(missing.generateAssistantReply({ action: 'reply', messages: [{ text: 'Hello' }] }), /启用 AI/);
   const { context: empty } = loadBackground(async () => mockJson({ choices: [] }), settings);

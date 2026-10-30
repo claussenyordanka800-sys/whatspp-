@@ -146,7 +146,7 @@ Issues and pull requests are welcome. The license is [MIT](LICENSE).
 - 支持“获取模型”：OpenAI 兼容接口和 Gemini 会读取可用模型供选择
 - 支持“测试接口”：保存前可确认 API Key、接口地址、模型是否可用
 - DeepSeek 已做专门兼容：Base URL 会自动规范为 `https://api.deepseek.com`，`/models` 获取失败会显示 401/403/404/429 等具体原因
-- DeepSeek 默认使用 `deepseek-v4-flash`；保留用户已填写的模型。成功获取模型时采用接口实际返回的列表，内置候选仍需测试确认可用性。
+- DeepSeek 默认使用 `deepseek-flash`（关闭思考模式以保证速度）；保留用户已填写的模型。成功获取模型时采用接口实际返回的列表，内置候选仍需测试确认可用性。
 - 消息翻译最多同时处理 3 条；Google 网页入口与 MyMemory 备用翻译并行竞速，失败入口会自动冷却，避免每条消息重复等待
 - 引用消息和图片数量不会再被当作正文重复翻译；接口返回 HTML 错误页时只显示简短错误
 

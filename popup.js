@@ -3,7 +3,7 @@ const LEGACY_PROVIDER_ORDER = ["volcano", "deepl", "openai", "deepseek", "doubao
 const REMOVED_PROVIDERS = new Set(["volcano"]);
 
 const DEEPSEEK_MODELS = [
-  { id: "deepseek-v4-flash", name: "deepseek-v4-flash" },
+  { id: "deepseek-flash", name: "deepseek-flash" },
   { id: "deepseek-v4-pro", name: "deepseek-v4-pro" }
 ];
 
@@ -37,7 +37,7 @@ const DEFAULT_SETTINGS = {
       authUrl: "https://edge.microsoft.com/translate/auth",
       baseUrl: "https://api-edge.cognitive.microsofttranslator.com/translate"
     },
-    deepseek: { apiKey: "", baseUrl: "https://api.deepseek.com", model: "deepseek-v4-flash", models: DEEPSEEK_MODELS },
+    deepseek: { apiKey: "", baseUrl: "https://api.deepseek.com", model: "deepseek-flash", models: DEEPSEEK_MODELS },
     grok: { apiKey: "", baseUrl: "https://api.x.ai/v1", model: "grok-4.5" },
     deepl: { apiKey: "", baseUrl: "https://api-free.deepl.com/v2", model: "translate" },
     openai: { apiKey: "", baseUrl: "https://api.openai.com/v1", model: "" },
@@ -185,7 +185,7 @@ function migrateSettings(settings) {
     ...DEFAULT_SETTINGS.providers.deepseek,
     ...(merged.providers.deepseek || {}),
     baseUrl: normalizeDeepSeekBaseUrl(merged.providers.deepseek?.baseUrl),
-    model: merged.providers.deepseek?.model || "deepseek-v4-flash",
+    model: merged.providers.deepseek?.model || "deepseek-flash",
     models: mergeModels(DEEPSEEK_MODELS, merged.providers.deepseek?.models)
   };
   if (merged.sendTrigger === "manual") {

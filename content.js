@@ -1741,24 +1741,39 @@ function toggleChatPanel(footer, toggle) {
       use.addEventListener('click', async () => {
         const input = findInput();
         if (!input || state.isTranslatingDraft) { status.textContent = '请等待当前翻译完成'; return; }
-        if (readComposerText(input)) { status.textContent = '草稿已有内容，请先发送或清空'; return; }
+        // Append to an existing draft instead of refusing, so a click always does something.
+        const current = readComposerText(input);
         state.draftRevision += 1;
         state.lastTranslatedDraft = null;
-        await replaceComposerText(input, phrase.text);
-        status.textContent = '已填入草稿';
+        await replaceComposerText(input, current ? `${current} ${phrase.text}` : phrase.text);
+        showComposerNotice(current ? '已追加到草稿' : '已填入草稿');
       });
       const edit = document.createElement('button');
       edit.type = 'button'; edit.textContent = '编辑';
       edit.setAttribute('aria-label', `编辑 ${phrase.title}`);
-      edit.addEventListener('click', () => { editing = index; form.elements.title.value = phrase.title; form.elements.text.value = phrase.text; form.elements.title.focus(); });
+      edit.addEventListener('click', () => { setEditing(index); form.elements.title.value = phrase.title; form.elements.text.value = phrase.text; form.elements.title.focus(); });
       const remove = document.createElement('button');
       remove.type = 'button'; remove.textContent = '删除';
       remove.setAttribute('aria-label', `删除 ${phrase.title}`);
-      remove.addEventListener('click', async () => { if (await persist(state.phrases.filter((_, i) => i !== index))) { editing = null; form.reset(); } });
+      remove.addEventListener('click', async () => {
+        if (!window.confirm(`删除常用语「${phrase.title}」？`)) return;
+        if (await persist(state.phrases.filter((_, i) => i !== index))) { setEditing(null); form.reset(); }
+      });
       row.append(use, edit, remove); list.append(row);
     });
-    if (!list.children.length) list.textContent = '没有匹配的常用语';
+    if (!list.children.length) list.textContent = state.phrases.length ? '没有匹配的常用语' : '还没有常用语，在下方添加';
   };
+  // Make edit mode visible and cancellable, so a new phrase never silently overwrites the edited one.
+  const submit = form.querySelector('button[type="submit"]');
+  const cancel = document.createElement('button');
+  cancel.type = 'button'; cancel.textContent = '取消编辑'; cancel.hidden = true;
+  submit.after(cancel);
+  const setEditing = (index) => {
+    editing = index;
+    submit.textContent = index === null ? '保存常用语' : '更新常用语';
+    cancel.hidden = index === null;
+  };
+  cancel.addEventListener('click', () => { setEditing(null); form.reset(); });
   panel.querySelector('.wa-phrase-search').addEventListener('input', renderPhrases);
   form.addEventListener('submit', async (event) => {
     event.preventDefault();
@@ -1767,7 +1782,7 @@ function toggleChatPanel(footer, toggle) {
     const next = [...state.phrases];
     if (editing === null) next.push(phrase); else next[editing] = phrase;
     if (next.length > 100) { status.textContent = '最多保存 100 条常用语'; return; }
-    if (await persist(next)) { editing = null; form.reset(); }
+    if (await persist(next)) { setEditing(null); form.reset(); }
   });
   renderPhrases();
 }
