@@ -74,6 +74,7 @@
 .wa-ai-panel button { border: 1px solid #008a6866; background: transparent; color: inherit; padding: 6px 12px; border-radius: 6px; cursor: pointer; }
 .wa-ai-panel button:disabled { opacity: .5; cursor: wait; }
 .wa-ai-result { display: block; width: 100%; box-sizing: border-box; padding: 9px; background: var(--compose-input-background, #fff); color: inherit; border: 1px solid #8696a066; border-radius: 6px; font: inherit; margin: 8px 0; resize: vertical; }
+.wa-ai-panel .wa-ai-reference { white-space: pre-wrap; opacity: 1; padding: 6px 8px; border-left: 3px solid #008a6866; }
 .wa-ai-panel [hidden] { display: none !important; }
 .wa-ai-panel .wa-ai-apply { background: #008a68; color: white; }
 

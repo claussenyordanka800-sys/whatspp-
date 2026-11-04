@@ -1596,6 +1596,7 @@ function toggleAIPanel(footer, toggle) {
     <div class="wa-ai-actions"><button type="button" data-action="reply">建议回复</button><button type="button" data-action="polish">润色草稿</button></div>
     <p class="wa-ai-status" role="status" aria-live="polite">点击生成，结果可编辑。</p>
     <textarea class="wa-ai-result" rows="3" aria-label="AI 回复预览" placeholder="AI 建议将在这里显示" hidden></textarea>
+    <p class="wa-ai-reference" hidden></p>
     <button type="button" class="wa-ai-apply" hidden>填入草稿</button>`;
   footer.insertBefore(panel, footer.querySelector('.wa-language-prompt').nextSibling);
   toggle.setAttribute('aria-expanded', 'true');
@@ -1605,6 +1606,17 @@ function toggleAIPanel(footer, toggle) {
   const status = panel.querySelector('.wa-ai-status');
   const output = panel.querySelector('textarea');
   const apply = panel.querySelector('.wa-ai-apply');
+  const reference = panel.querySelector('.wa-ai-reference');
+  // Translate the AI reply back into the user's own language so they can check it before sending.
+  const showReference = async (text) => {
+    const targetLanguage = getReceiveLanguage();
+    if (isSameLanguage(snapshot.language, targetLanguage)) return;
+    reference.hidden = false; reference.textContent = '对照译文翻译中…';
+    const result = await chrome.runtime.sendMessage({ type: 'translate', payload: { text, targetLanguage, sourceLanguage: snapshot.language, direction: 'receive' } }).catch(() => null);
+    if (!panel.isConnected || output.value !== text) return;
+    reference.textContent = result?.ok && normalizeText(result.text) ? `对照译文：${result.text}` : '对照译文翻译失败，不影响填入';
+  };
+  output.addEventListener('input', () => { if (!reference.hidden) reference.textContent = '预览已修改，对照译文不再对应'; });
   const buttons = [...panel.querySelectorAll('[data-action]')];
   let snapshot;
   for (const button of buttons) button.addEventListener('click', async () => {
@@ -1614,7 +1626,7 @@ function toggleAIPanel(footer, toggle) {
     const action = button.dataset.action;
     if (action === 'polish' && !snapshot.draft) { status.textContent = '请先输入需要润色的草稿'; return; }
     buttons.forEach(item => { item.disabled = true; });
-    output.hidden = true; apply.hidden = true;
+    output.hidden = true; apply.hidden = true; reference.hidden = true;
     status.textContent = 'AI 正在生成…';
     try {
       const messages = action === 'reply' ? findMessageNodes().slice(-8).map(node => ({ direction: getMessageDirection(node, findAllTextContainers(node)[0]), text: findAllTextContainers(node).map(extractMessageText).join('\n') })) : [];
@@ -1628,6 +1640,7 @@ function toggleAIPanel(footer, toggle) {
       if (!normalizeText(response.text)) throw new Error('AI 返回空内容');
       output.value = response.text; output.hidden = false; apply.hidden = false;
       status.textContent = `由 ${response.providerName || response.provider || 'AI'} 生成 · 请核对事实与承诺后填入`;
+      showReference(response.text);
     } catch (error) {
       if (panel.isConnected) status.textContent = formatTranslationError(error);
       if (state.runtimeUnavailable) reportDiag({ level: "error", event: "ai.runtime", message: formatTranslationError(error), action, targetLanguage: snapshot.language, text: snapshot.draft });

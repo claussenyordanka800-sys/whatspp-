@@ -298,7 +298,7 @@ await scenario('failed AI draft write retains the original and cannot send trunc
     f.window.document.execCommand = () => { f.input.textContent = 'AI'; f.input.dispatchEvent(new f.window.InputEvent('input', { bubbles: true, inputType: 'insertText', data: null })); return true; };
     f.window.document.querySelector('.wa-ai-apply').click(); await tick(600);
     assert.equal(f.window.document.querySelector('.wa-composer-original textarea').value, '中文原稿'); assert.equal(f.sends, 0);
-    f.send.click(); await tick(); assert.equal(f.sends, 0); assert.equal(f.calls[1].payload.text, '中文原稿');
+    f.send.click(); await tick(); assert.equal(f.sends, 0); assert.equal(f.calls.at(-1).payload.text, '中文原稿');
   } finally { f.window.close(); }
 });
 await scenario('framework partial paste with empty event data retains original', async () => {

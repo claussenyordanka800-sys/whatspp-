@@ -164,6 +164,11 @@ for (const editWhileWaiting of [false, true]) {
   await tick();
   assert.notEqual(f.input.textContent, 'AI reply');
   assert.match(f.window.document.querySelector('.wa-ai-status').textContent, /Test AI/);
+  // The reply is translated back into the user's language for review.
+  assert.deepEqual([f.calls[1].type, f.calls[1].payload.text, f.calls[1].payload.targetLanguage], ['translate', 'AI reply', 'zh-CN']);
+  finish({ ok: true, text: 'AI 回复' });
+  await tick();
+  assert.equal(f.window.document.querySelector('.wa-ai-reference').textContent, '对照译文：AI 回复');
   f.window.document.querySelector('.wa-ai-apply').click();
   await tick();
   assert.equal(f.input.textContent, editWhileWaiting ? 'new draft' : 'AI reply');
